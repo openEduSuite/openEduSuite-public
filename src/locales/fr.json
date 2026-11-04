@@ -1,0 +1,175 @@
+{
+  "ui": {
+    "login": "Se connecter",
+    "subtitle": "Plateforme de collaboration",
+    "hero": "Votre espace de travail collaboratif",
+    "heroSub": "Accédez à tous les services openEduSuite depuis un seul endroit. Connexion unique avec votre compte universitaire, outils intégrés pour l'enseignement, la recherche et la collaboration.",
+    "servicesLive_one": "{{count}} service en ligne",
+    "servicesLive_many": "{{count}} services en ligne",
+    "servicesLive": "{{count}} services en ligne",
+    "servicesLive_other": "{{count}} services en ligne",
+    "ssoEnabled_one": "{{count}} service avec SSO",
+    "ssoEnabled_many": "{{count}} services avec SSO",
+    "ssoEnabled": "{{count}} services avec SSO",
+    "ssoEnabled_other": "{{count}} services avec SSO",
+    "staffServices": "Services pour le personnel et les étudiants",
+    "account": "Compte",
+    "docs": "Docs",
+    "poweredBy": "openEduSuite · Propulsé par {{operator}} · Hébergé à l'{{institution}}",
+    "langPickerLabel": "Langue",
+    "logout": "Déconnexion",
+    "sectionServices": "Services",
+    "sectionUniversity": "Université",
+    "weather": "Météo",
+    "news": "Actualités de l'université",
+    "events": "Événements",
+    "hrz": "HRZ",
+    "ub": "Bibliothèque universitaire",
+    "newsLoading": "Chargement…",
+    "newsUnavailable": "Flux indisponible",
+    "newsEmpty": "Aucune entrée",
+    "kalender": "Calendrier",
+    "statTotal_one": "{{count}} service",
+    "statTotal_other": "{{count}} services",
+    "statTotal_many": "{{count}} services",
+    "statTotal": "{{count}} services",
+    "statCategories_one": "{{count}} catégorie",
+    "statCategories_other": "{{count}} catégories",
+    "statCategories_many": "{{count}} catégories",
+    "statCategories": "{{count}} catégories",
+    "themeToggleLabel": "Basculer le mode sombre"
+  },
+  "category": {
+    "identity": "Identité et accès",
+    "communication": "Communication",
+    "productivity": "Productivité",
+    "knowledge": "Savoirs",
+    "development": "Développement et IA",
+    "infrastructure": "Infrastructure"
+  },
+  "status": {
+    "sso": "SSO"
+  },
+  "services": {
+    "keycloak": {
+      "name": "Keycloak SSO",
+      "description": "Fournisseur d'identité Single Sign-On. Connectez-vous une seule fois pour accéder à tous les services openEduSuite avec votre compte universitaire."
+    },
+    "element": {
+      "name": "Element Chat",
+      "description": "Messagerie sécurisée et collaboration propulsées par Matrix. Chat en temps réel avec chiffrement de bout en bout."
+    },
+    "opencloud": {
+      "name": "OpenCloud",
+      "description": "Stockage de fichiers, partage et collaboration. Téléversez, synchronisez et partagez des documents avec votre équipe."
+    },
+    "nextcloud": {
+      "name": "Nextcloud",
+      "description": "Stockage de fichiers et collaboration (instance de test). Téléversez, synchronisez et partagez des documents avec votre équipe."
+    },
+    "sogo": {
+      "name": "SOGo Webmail",
+      "description": "Courriel, agenda et contacts dans le navigateur. Accédez à votre messagerie depuis n'importe quel navigateur."
+    },
+    "openproject": {
+      "name": "OpenProject",
+      "description": "Gestion de projet, suivi du temps et tableaux agiles. Planifiez et suivez vos projets en collaboration."
+    },
+    "operaton": {
+      "name": "Operaton",
+      "description": "Automatisation des flux de travail et modélisation de processus BPMN avec le moteur Operaton."
+    },
+    "hedgedoc": {
+      "name": "HedgeDoc",
+      "description": "Notes Markdown collaboratives et documentation en temps réel."
+    },
+    "xwiki": {
+      "name": "XWiki",
+      "description": "Wiki collaboratif pour la documentation, le partage de connaissances et le contenu structuré."
+    },
+    "open-webui": {
+      "name": "Open WebUI",
+      "description": "Interface de type ChatGPT pour les LLM locaux. Interagissez avec Qwen3 et d'autres modèles hébergés sur le cluster."
+    },
+    "argocd": {
+      "name": "Argo CD",
+      "description": "Livraison continue GitOps. Gérez et surveillez les déploiements Kubernetes à partir de dépôts Git."
+    },
+    "sogo-staff": {
+      "name": "SOGo Courrier personnel",
+      "description": "Webmail pour les comptes du personnel."
+    },
+    "xwiki-staff": {
+      "name": "XWiki Personnel",
+      "description": "Wiki pour la collaboration du personnel."
+    },
+    "sogo-students": {
+      "name": "SOGo Courrier étudiants",
+      "description": "Webmail pour les comptes étudiants."
+    },
+    "sogo6": {
+      "name": "E-mail & agenda (SOGo6)",
+      "description": "Messagerie, agenda et carnet d’adresses — le nouveau client web SOGo."
+    },
+    "n8n": {
+      "name": "Automatisation (n8n)",
+      "description": "Automatisation et orchestration de flux de travail."
+    },
+    "dify": {
+      "name": "Applications IA (Dify)",
+      "description": "Création d’assistants IA, agents et chatbots."
+    },
+    "ewoks": {
+      "name": "Flux scientifiques (EWOKS)",
+      "description": "Orchestration de flux scientifiques (ESRF)."
+    },
+    "rt": {
+      "name": "Tickets & support (RT)",
+      "description": "Request Tracker pour tickets, incidents et support."
+    },
+    "typst": {
+      "name": "Typst",
+      "description": "Composition et documents scientifiques."
+    },
+    "toss": {
+      "name": "TOSS (serveur Typst)",
+      "description": "Documents collaboratifs via un serveur Typst."
+    },
+    "discourse": {
+      "name": "Forum (Discourse)",
+      "description": "Forum de discussion et plateforme communautaire."
+    },
+    "indico": {
+      "name": "Gestion d’événements (Indico)",
+      "description": "Conférences, réunions et cours."
+    },
+    "kitodo": {
+      "name": "Numérisation / Workflow (Kitodo)",
+      "description": "Flux de numérisation Kitodo.Production."
+    },
+    "grist": {
+      "name": "Formulaires & saisie (Grist)",
+      "description": "Formulaires souverains et base de données type tableur."
+    },
+    "marvin": {
+      "name": "MARVIN",
+      "description": "Système de gestion des campus."
+    },
+    "ilias": {
+      "name": "ILIAS",
+      "description": "Plateforme d’apprentissage."
+    },
+    "hessenbox": {
+      "name": "next.hessenbox",
+      "description": "Synchronisation et partage dans le nuage (hessenBox)."
+    },
+    "bbb": {
+      "name": "BigBlueButton (Uni)",
+      "description": "Visioconférences et réunions en ligne."
+    },
+    "personenverzeichnis": {
+      "name": "Annuaire des personnes",
+      "description": "Annuaire du personnel (LDAP)."
+    }
+  }
+}

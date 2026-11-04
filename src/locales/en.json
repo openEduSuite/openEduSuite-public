@@ -1,0 +1,175 @@
+{
+  "ui": {
+    "login": "Login",
+    "subtitle": "Collaboration Platform",
+    "hero": "Your collaborative workspace",
+    "heroSub": "Access all openEduSuite services from one place. Single Sign-On with your university account, integrated tools for teaching, research, and collaboration.",
+    "servicesLive_one": "{{count}} service live",
+    "servicesLive_other": "{{count}} services live",
+    "servicesLive_many": "{{count}} services live",
+    "servicesLive": "{{count}} services live",
+    "ssoEnabled_one": "{{count}} SSO-enabled service",
+    "ssoEnabled_other": "{{count}} SSO-enabled services",
+    "ssoEnabled_many": "{{count}} SSO-enabled services",
+    "ssoEnabled": "{{count}} SSO-enabled services",
+    "staffServices": "Staff & Student Services",
+    "account": "Account",
+    "docs": "Docs",
+    "poweredBy": "openEduSuite · Powered by {{operator}} · Hosted at {{institution}}",
+    "langPickerLabel": "Language",
+    "logout": "Logout",
+    "sectionServices": "Services",
+    "sectionUniversity": "University",
+    "weather": "Weather",
+    "news": "University News",
+    "events": "Events",
+    "hrz": "HRZ",
+    "ub": "University Library",
+    "newsLoading": "Loading…",
+    "newsUnavailable": "Feed unavailable",
+    "newsEmpty": "No entries",
+    "kalender": "Calendar",
+    "statTotal_one": "{{count}} service",
+    "statTotal_other": "{{count}} services",
+    "statTotal_many": "{{count}} services",
+    "statTotal": "{{count}} services",
+    "statCategories_one": "{{count}} category",
+    "statCategories_other": "{{count}} categories",
+    "statCategories_many": "{{count}} categories",
+    "statCategories": "{{count}} categories",
+    "themeToggleLabel": "Toggle dark mode"
+  },
+  "category": {
+    "identity": "Identity & Access",
+    "communication": "Communication",
+    "productivity": "Productivity",
+    "knowledge": "Knowledge",
+    "development": "Development & AI",
+    "infrastructure": "Infrastructure"
+  },
+  "status": {
+    "sso": "SSO"
+  },
+  "services": {
+    "keycloak": {
+      "name": "Keycloak SSO",
+      "description": "Single Sign-On identity provider. Log in once to access all openEduSuite services with your university account."
+    },
+    "element": {
+      "name": "Element Chat",
+      "description": "Secure messaging and collaboration powered by Matrix. Real-time chat with end-to-end encryption."
+    },
+    "opencloud": {
+      "name": "OpenCloud",
+      "description": "File storage, sharing, and collaboration. Upload, sync, and share documents with your team."
+    },
+    "nextcloud": {
+      "name": "Nextcloud",
+      "description": "File storage and collaboration (test instance). Upload, sync, and share documents with your team."
+    },
+    "sogo": {
+      "name": "SOGo Webmail",
+      "description": "Web-based email, calendar, and contacts. Access your mailbox from any browser."
+    },
+    "openproject": {
+      "name": "OpenProject",
+      "description": "Project management, time tracking, and agile boards. Plan and track your projects collaboratively."
+    },
+    "operaton": {
+      "name": "Operaton",
+      "description": "Workflow automation and BPMN process modeling with the Operaton engine."
+    },
+    "hedgedoc": {
+      "name": "HedgeDoc",
+      "description": "Collaborative Markdown notes and documentation, edited in real time."
+    },
+    "xwiki": {
+      "name": "XWiki",
+      "description": "Collaborative wiki for documentation, knowledge sharing, and structured content."
+    },
+    "open-webui": {
+      "name": "Open WebUI",
+      "description": "ChatGPT-like interface for local LLMs. Interact with Qwen3 and other models hosted on the cluster."
+    },
+    "argocd": {
+      "name": "Argo CD",
+      "description": "GitOps continuous delivery. Manage and monitor Kubernetes deployments from Git repositories."
+    },
+    "sogo-staff": {
+      "name": "SOGo Staff Mail",
+      "description": "Webmail for staff accounts."
+    },
+    "xwiki-staff": {
+      "name": "XWiki Staff",
+      "description": "Wiki for staff collaboration."
+    },
+    "sogo-students": {
+      "name": "SOGo Student Mail",
+      "description": "Webmail for student accounts."
+    },
+    "sogo6": {
+      "name": "E-Mail & Calendar (SOGo6)",
+      "description": "Mail, calendar and address book — the modern SOGo Web client."
+    },
+    "n8n": {
+      "name": "Automation (n8n)",
+      "description": "Automation and workflow orchestration."
+    },
+    "dify": {
+      "name": "AI Applications (Dify)",
+      "description": "Build AI assistants, agent apps and chat bots."
+    },
+    "ewoks": {
+      "name": "Scientific Workflows (EWOKS)",
+      "description": "Scientific workflow orchestration (ESRF)."
+    },
+    "rt": {
+      "name": "Tickets & Service Desk (RT)",
+      "description": "Request Tracker for tickets, incidents and service desk."
+    },
+    "typst": {
+      "name": "Typst",
+      "description": "Typesetting and scientific documents."
+    },
+    "toss": {
+      "name": "TOSS (Typst Server)",
+      "description": "Collaborative documents with a Typst server."
+    },
+    "discourse": {
+      "name": "Forum (Discourse)",
+      "description": "Discussion forum and community platform."
+    },
+    "indico": {
+      "name": "Event Management (Indico)",
+      "description": "Conferences, meetings and lectures."
+    },
+    "kitodo": {
+      "name": "Digitization / Workflow (Kitodo)",
+      "description": "Kitodo.Production digitization workflows."
+    },
+    "grist": {
+      "name": "Forms & Data Capture (Grist)",
+      "description": "Sovereign forms and spreadsheet-database."
+    },
+    "marvin": {
+      "name": "MARVIN",
+      "description": "Campus management system."
+    },
+    "ilias": {
+      "name": "ILIAS",
+      "description": "Learning platform."
+    },
+    "hessenbox": {
+      "name": "next.hessenbox",
+      "description": "Cloud sync & share (hessenBox)."
+    },
+    "bbb": {
+      "name": "BigBlueButton (Uni)",
+      "description": "Video conferencing and online meetings."
+    },
+    "personenverzeichnis": {
+      "name": "Directory of persons",
+      "description": "Staff directory (LDAP)."
+    }
+  }
+}

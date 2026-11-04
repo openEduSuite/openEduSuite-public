@@ -1,0 +1,63 @@
+# openEduSuite portal — nginx: static SPA + optional same-origin RSS/Atom feed proxies.
+#
+# The nginx image runs envsubst on this template at container start (files under
+# /etc/nginx/templates). Feed upstream URLs and the DNS resolver are injected via
+# environment variables (see Dockerfile ENV defaults). Point them at your own
+# university's feeds, e.g.:
+#   docker run -e FEED_NEWS_URL=https://www.uni-example.edu/news/atom.xml \
+#              -e DNS_RESOLVER=10.0.0.10 ...
+#
+# The browser fetches feeds same-origin (no CORS issues); nginx retrieves them
+# server-side.
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location = /ping {
+    add_header Content-Type text/plain;
+    return 200 'pong';
+  }
+  location = /health {
+    add_header Content-Type text/plain;
+    return 200 'ok';
+  }
+
+  resolver ${DNS_RESOLVER} valid=30s;
+
+  location = /news {
+    proxy_pass ${FEED_NEWS_URL};
+    proxy_ssl_server_name on;
+    proxy_http_version 1.1;
+  }
+  location = /events {
+    proxy_pass ${FEED_EVENTS_URL};
+    proxy_ssl_server_name on;
+    proxy_http_version 1.1;
+  }
+  location = /hrz {
+    proxy_pass ${FEED_HRZ_URL};
+    proxy_ssl_server_name on;
+    proxy_http_version 1.1;
+  }
+  location = /ub {
+    proxy_pass ${FEED_UB_URL};
+    proxy_ssl_server_name on;
+    proxy_http_version 1.1;
+  }
+  location = /kalender {
+    proxy_pass ${FEED_CAL_URL};
+    proxy_ssl_server_name on;
+    proxy_http_version 1.1;
+  }
+
+  location /assets/ {
+    try_files $uri =404;
+    add_header Cache-Control "public, max-age=31536000";
+  }
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}

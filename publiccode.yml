@@ -1,0 +1,66 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+publiccodeYmlVersion: "0.4"
+name: "openEduSuite Portal"
+applicationSuite: "openEduSuite"
+url: "https://github.com/openEduSuite/openEduSuite-public"
+platforms:
+  - "web"
+softwareType: "standalone/web"
+developmentStatus: "stable"
+releaseDate: "2026-11-04"
+logo: "public/brand/openedusuite-logo.svg"
+maintenance:
+  type: "community"
+  contacts:
+    - name: "openEduSuite Contributors"
+      affiliation: "openEduSuite"
+legal:
+  license: "Apache-2.0"
+  mainCopyrightOwner: "2026 openEduSuite Contributors"
+intendedAudience:
+  countries:
+    - "de"
+  scope:
+    - "education"
+    - "research"
+    - "government"
+    - "local-authorities"
+localisation:
+  availableLanguages:
+    - "de"
+    - "en"
+    - "fr"
+    - "zh"
+  localisationReady: true
+isBasedOn:
+  - "https://github.com/Bundesdruckerei/opendesk"
+description:
+  en:
+    genericName: "Service portal for education institutions"
+    shortDescription: >-
+      Configurable service dashboard with university SSO — all openEduSuite
+      services in one place.
+    longDescription: >
+      The openEduSuite portal is a single-page dashboard that lists all
+      connected services (cloud, mail, chat, LMS, video conferencing, ...) as
+      tiles. It is deployment-agnostic: the image ships placeholder defaults
+      and fetches a runtime /config.json (e.g. a Kubernetes ConfigMap), so any
+      institution can run its own portal behind oauth2-proxy with its own
+      identity provider. Includes SSO login state, theme toggle, weather/news
+      widgets and i18n (de/en/fr/zh).
+  de:
+    genericName: "Service-Portal für Bildungseinrichtungen"
+    shortDescription: >-
+      Konfigurierbares Service-Dashboard mit Hochschul-SSO — alle
+      openEduSuite-Dienste an einem Ort.
+    longDescription: >
+      Das openEduSuite-Portal ist ein einseitiges Dashboard, das alle
+      angebundenen Dienste (Cloud, Mail, Chat, LMS, Videokonferenzen, ...) als
+      Kacheln auflistet. Es ist deployment-agnostisch: Das Image liefert
+      Platzhalter-Defaults und lädt zur Laufzeit ein /config.json (z. B. eine
+      Kubernetes-ConfigMap), sodass jede Einrichtung ihr eigenes Portal hinter
+      oauth2-proxy mit eigenem Identity Provider betreiben kann. Enthält
+      SSO-Anmeldestatus, Theme-Umschalter, Wetter-/News-Widgets und
+      Internationalisierung (de/en/fr/zh).

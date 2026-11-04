@@ -1,0 +1,119 @@
+{
+  "sso": {
+    "loginUrl": "https://id.example.org/realms/example/protocol/openid-connect/auth?client_id=portal&redirect_uri=https%3A%2F%2Fportal.example.org&response_type=code&scope=openid%20profile%20email",
+    "accountUrl": "https://id.example.org/realms/example/account/"
+  },
+  "docsUrl": "https://docs.example.org",
+  "branding": {
+    "operator": "IT Service Center",
+    "institution": "Your University"
+  },
+  "services": [
+    {
+      "id": "keycloak",
+      "category": "identity",
+      "status": "live",
+      "launchUrl": "https://id.example.org/realms/example/account/",
+      "ssoEnabled": true,
+      "icon": "🔐"
+    },
+    {
+      "id": "element",
+      "category": "communication",
+      "status": "live",
+      "launchUrl": "https://chat.example.org",
+      "ssoEnabled": true,
+      "icon": "💬"
+    },
+    {
+      "id": "bbb",
+      "category": "communication",
+      "status": "live",
+      "launchUrl": "https://bbb.example.org",
+      "ssoEnabled": false,
+      "icon": "📹"
+    },
+    {
+      "id": "opencloud",
+      "category": "productivity",
+      "status": "live",
+      "launchUrl": "https://cloud.example.org",
+      "ssoEnabled": true,
+      "icon": "☁️"
+    },
+    {
+      "id": "nextcloud",
+      "category": "productivity",
+      "status": "live",
+      "launchUrl": "https://nextcloud.example.org",
+      "ssoEnabled": false,
+      "icon": "☁️"
+    },
+    {
+      "id": "sogo",
+      "category": "productivity",
+      "status": "live",
+      "launchUrl": "https://mail.example.org",
+      "ssoEnabled": true,
+      "icon": "📧"
+    },
+    {
+      "id": "openproject",
+      "category": "productivity",
+      "status": "live",
+      "launchUrl": "https://project.example.org",
+      "ssoEnabled": true,
+      "icon": "📊"
+    },
+    {
+      "id": "xwiki",
+      "category": "knowledge",
+      "status": "live",
+      "launchUrl": "https://wiki.example.org",
+      "ssoEnabled": true,
+      "icon": "📚"
+    },
+    {
+      "id": "open-webui",
+      "category": "development",
+      "status": "beta",
+      "launchUrl": "https://ai.example.org",
+      "ssoEnabled": false,
+      "icon": "🤖"
+    },
+    {
+      "id": "argocd",
+      "category": "infrastructure",
+      "status": "live",
+      "launchUrl": "https://gitops.example.org",
+      "ssoEnabled": false,
+      "icon": "🚀"
+    }
+  ],
+  "staffServices": [
+    {
+      "id": "sogo-staff",
+      "category": "productivity",
+      "status": "live",
+      "launchUrl": "https://mail-staff.example.org",
+      "ssoEnabled": true,
+      "icon": "📧"
+    },
+    {
+      "id": "xwiki-staff",
+      "category": "knowledge",
+      "status": "live",
+      "launchUrl": "https://wiki-staff.example.org",
+      "ssoEnabled": true,
+      "icon": "📚"
+    },
+    {
+      "id": "sogo-students",
+      "category": "productivity",
+      "status": "live",
+      "launchUrl": "https://mail-students.example.org",
+      "ssoEnabled": true,
+      "icon": "📧"
+    }
+  ]
+}

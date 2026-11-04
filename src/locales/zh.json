@@ -1,0 +1,175 @@
+{
+  "ui": {
+    "login": "登录",
+    "subtitle": "协作平台",
+    "hero": "您的协作工作空间",
+    "heroSub": "在一个地方访问所有 openEduSuite 服务。使用您的大学账户单点登录，整合的教学、科研与协作工具。",
+    "servicesLive": "{{count}} 项服务在线",
+    "servicesLive_many": "{{count}} 项服务在线",
+    "servicesLive_other": "{{count}} 项服务在线",
+    "servicesLive_one": "{{count}} 项服务在线",
+    "ssoEnabled": "{{count}} 项已启用 SSO",
+    "ssoEnabled_many": "{{count}} 项已启用 SSO",
+    "ssoEnabled_other": "{{count}} 项已启用 SSO",
+    "ssoEnabled_one": "{{count}} 项已启用 SSO",
+    "staffServices": "教职工和学生服务",
+    "account": "账户",
+    "docs": "文档",
+    "poweredBy": "openEduSuite · 由 {{operator}} 提供支持 · 托管于 {{institution}}",
+    "langPickerLabel": "语言",
+    "logout": "退出登录",
+    "sectionServices": "服务",
+    "sectionUniversity": "大学",
+    "weather": "天气",
+    "news": "大学新闻",
+    "events": "活动",
+    "hrz": "HRZ",
+    "ub": "大学图书馆",
+    "newsLoading": "加载中…",
+    "newsUnavailable": "订阅源不可用",
+    "newsEmpty": "暂无条目",
+    "kalender": "日历",
+    "statTotal": "{{count}} 个服务",
+    "statTotal_many": "{{count}} 个服务",
+    "statTotal_other": "{{count}} 个服务",
+    "statTotal_one": "{{count}} 个服务",
+    "statCategories": "{{count}} 个类别",
+    "statCategories_many": "{{count}} 个类别",
+    "statCategories_other": "{{count}} 个类别",
+    "statCategories_one": "{{count}} 个类别",
+    "themeToggleLabel": "切换深色模式"
+  },
+  "category": {
+    "identity": "身份与访问",
+    "communication": "通信",
+    "productivity": "生产力",
+    "knowledge": "知识",
+    "development": "开发与 AI",
+    "infrastructure": "基础设施"
+  },
+  "status": {
+    "sso": "SSO"
+  },
+  "services": {
+    "keycloak": {
+      "name": "Keycloak SSO",
+      "description": "单点登录身份提供程序。只需登录一次，即可使用您的大学账户访问所有 openEduSuite 服务。"
+    },
+    "element": {
+      "name": "Element Chat",
+      "description": "由 Matrix 驱动的安全消息与协作。实时聊天，端到端加密。"
+    },
+    "opencloud": {
+      "name": "OpenCloud",
+      "description": "文件存储、共享与协作。上传、同步并与团队共享文档。"
+    },
+    "nextcloud": {
+      "name": "Nextcloud",
+      "description": "文件存储与协作（测试实例）。上传、同步并与团队共享文档。"
+    },
+    "sogo": {
+      "name": "SOGo Webmail",
+      "description": "基于网页的电子邮件、日历和联系人。从任何浏览器访问您的邮箱。"
+    },
+    "openproject": {
+      "name": "OpenProject",
+      "description": "项目管理、工时记录与敏捷看板。协同规划并跟踪您的项目。"
+    },
+    "operaton": {
+      "name": "Operaton",
+      "description": "使用 Operaton 引擎实现工作流自动化和 BPMN 流程建模。"
+    },
+    "hedgedoc": {
+      "name": "HedgeDoc",
+      "description": "实时协作的 Markdown 笔记与文档。"
+    },
+    "xwiki": {
+      "name": "XWiki",
+      "description": "用于文档、知识共享和结构化内容的协作 Wiki。"
+    },
+    "open-webui": {
+      "name": "Open WebUI",
+      "description": "类似 ChatGPT 的本地大语言模型界面。与部署在集群上的 Qwen3 等模型交互。"
+    },
+    "argocd": {
+      "name": "Argo CD",
+      "description": "GitOps 持续交付。从 Git 仓库管理和监控 Kubernetes 部署。"
+    },
+    "sogo-staff": {
+      "name": "SOGo 教职工邮箱",
+      "description": "面向教职工账户的网页邮箱。"
+    },
+    "xwiki-staff": {
+      "name": "XWiki 教职工",
+      "description": "面向教职工协作的 Wiki。"
+    },
+    "sogo-students": {
+      "name": "SOGo 学生邮箱",
+      "description": "面向学生账户的网页邮箱。"
+    },
+    "sogo6": {
+      "name": "邮箱与日历 (SOGo6)",
+      "description": "邮件、日历和通讯录 — 新版 SOGo 网页客户端。"
+    },
+    "n8n": {
+      "name": "自动化 (n8n)",
+      "description": "自动化与工作流编排。"
+    },
+    "dify": {
+      "name": "AI 应用 (Dify)",
+      "description": "构建 AI 助手、代理应用与聊天机器人。"
+    },
+    "ewoks": {
+      "name": "科研工作流 (EWOKS)",
+      "description": "科研工作流编排 (ESRF)。"
+    },
+    "rt": {
+      "name": "工单与服务台 (RT)",
+      "description": "用于工单、事件与服务台的 Request Tracker。"
+    },
+    "typst": {
+      "name": "Typst",
+      "description": "科学文档排版系统。"
+    },
+    "toss": {
+      "name": "TOSS (Typst 服务器)",
+      "description": "基于 Typst 服务器的协作文档。"
+    },
+    "discourse": {
+      "name": "论坛 (Discourse)",
+      "description": "讨论论坛与社区平台。"
+    },
+    "indico": {
+      "name": "活动管理 (Indico)",
+      "description": "会议、会面与讲座。"
+    },
+    "kitodo": {
+      "name": "数字化 / 工作流 (Kitodo)",
+      "description": "Kitodo.Production 数字化工作流。"
+    },
+    "grist": {
+      "name": "表单与采集 (Grist)",
+      "description": "自主可控的表单与表格数据库。"
+    },
+    "marvin": {
+      "name": "MARVIN",
+      "description": "校园管理系统。"
+    },
+    "ilias": {
+      "name": "ILIAS",
+      "description": "学习平台。"
+    },
+    "hessenbox": {
+      "name": "next.hessenbox",
+      "description": "云同步与共享 (hessenBox)。"
+    },
+    "bbb": {
+      "name": "BigBlueButton (Uni)",
+      "description": "视频会议和在线会议。"
+    },
+    "personenverzeichnis": {
+      "name": "人员目录",
+      "description": "员工目录 (LDAP)。"
+    }
+  }
+}
