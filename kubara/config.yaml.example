@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+# kubara cluster configuration — openEduSuite (template).
+#
+# kubara bootstraps ArgoCD into your cluster and generates Helm charts for
+# the platform layer (cert-manager, external-secrets, kyverno, ...) from
+# OCI catalogs. openEduSuite's app services then deploy through the SAME
+# ArgoCD wrapper shipped in argocd/ — see kubara/README.md.
+#
+# ALL values below are PLACEHOLDERS — replace before running `kubara bootstrap`.
+version: v1alpha5
+clusters:
+  - name: openedusuite
+    stage: dev
+    type: hub
+    dnsName: openedusuite.example.org      # base domain of your platform
+    ingressClassName: nginx               # your ingress controller class
+    terraform:
+      provider: none                      # kubara only manages the ArgoCD layer
+      projectId: openedusuite
+      kubernetesType: k3s                 # k3s / self-managed
+      kubernetesVersion: "1.31"
+      dns:
+        name: openedusuite.example.org
+        email: admin@example.org
+    argocd:
+      selfManaged: enabled
+      repo:
+        authMode: https
+        git:
+          configs:
+            # Repo containing the openEduSuite App-of-Apps (argocd/) + helmfile tree.
+            # Fork build the openEduSuite-public repo and point here.
+            url: https://github.com/openEduSuite/openEduSuite-public.git
+            targetRevision: main
+          components:
+            url: https://github.com/openEduSuite/openEduSuite-public.git
+            targetRevision: main
+    catalogs:
+      - oci://ghcr.io/kubara-io/catalogs/general:7.0.0
+    services:
+      # Platform components kubara pre-provisions for openEduSuite.
+      cert-manager:
+        status: enabled
+      external-secrets:
+        status: enabled
+      kyverno:
+        status: enabled
+      kyverno-policies:
+        status: enabled
+      kyverno-policy-reporter:
+        status: enabled
+      metrics-server:
+        status: enabled
+      reloader:
+        status: enabled
+      # Components that are not needed for the public subset — keep disabled
+      # unless your cluster actually uses them.
+      crossplane:
+        status: disabled
+      external-dns:
+        status: disabled
+      homer-dashboard:
+        status: disabled
+      kube-prometheus-stack:
+        status: disabled
+      loki:
+        status: disabled
+      longhorn:
+        status: disabled
+      metallb:
+        status: disabled
+      oauth2-proxy:
+        status: disabled
+      traefik:
+        status: disabled
+      velero:
+        status: disabled
+        config:
+          backupMode: fs-backup
+          backupStorage:
+            create: true
+            region: eu01

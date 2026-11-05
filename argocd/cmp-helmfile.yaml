@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+# ArgoCD Config Management Plugin (CMP) v2 — helmfile.
+#
+# Lets ArgoCD render Kubernetes manifests from the openEduSuite helmfile tree.
+# The plugin is loaded by a sidecar on argocd-repo-server (see
+# cmp-repo-server.yaml and argocd/README.md for installation).
+#
+# Each child Application passes `HELMFILE_GLOBAL_OPTIONS` (file, environment,
+# namespace, release selector); the plugin executes helmfile with those options
+# and emits the rendered manifests.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cmp-helmfile
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmp-helmfile
+    app.kubernetes.io/part-of: openedusuite
+data:
+  plugin.yaml: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ConfigManagementPlugin
+    metadata:
+      name: helmfile
+    spec:
+      version: v2
+      sidecar: true
+      discover:
+        find:
+          glob: "**/helmfile*.yaml*"
+      generate:
+        command:
+          - sh
+          - -c
+          - |
+            set -euo pipefail
+            echo "[helmfile-cmp] helmfile $(helmfile --version)"
+            echo "[helmfile-cmp] options: ${HELMFILE_GLOBAL_OPTIONS:-<none>}"
+            helmfile ${HELMFILE_GLOBAL_OPTIONS:-} template --skip-deps
+            echo "[helmfile-cmp] render complete."

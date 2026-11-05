@@ -1,0 +1,69 @@
+{{- range .Values.apps }}
+{{- if .enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.global.argocdNamespace | default "argocd" }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .phase | quote }}
+    {{- if .description }}
+    argocd.argoproj.io/description: {{ .description | quote }}
+    {{- end }}
+spec:
+  project: {{ $.Values.global.project | default "default" }}
+  source:
+    repoURL: {{ $.Values.global.repoURL }}
+    targetRevision: {{ $.Values.global.targetRevision | default "main" }}
+    path: {{ $.Values.global.path | default "helmfile" }}
+    plugin:
+      name: helmfile
+      env:
+        # Each child Application renders the SHARED root helmfile (which carries the
+        # environments/example.yaml values) restricted to its own release. Chart paths
+        # like ../../../charts/... resolve relative to each app's helmfile file.
+        - name: HELMFILE_ENVIRONMENT
+          value: {{ $.Values.global.helmfileEnvironment | default "example" | quote }}
+        - name: HELMFILE_GLOBAL_OPTIONS
+          value: "--file helmfile.yaml.gotmpl --environment {{ $.Values.global.helmfileEnvironment | default "example" }} --namespace {{ $.Values.global.namespace | default "openedusuite" }} --allow-no-matching-release -l name={{ .release }}"
+        {{- range $env := $.Values.global.helmfilePluginEnv }}
+        - name: {{ $env.name }}
+          value: {{ $env.value | quote }}
+        {{- end }}
+  destination:
+    server: {{ $.Values.global.destinationServer | default "https://kubernetes.default.svc" }}
+    namespace: {{ $.Values.global.namespace | default "openedusuite" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 2
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+  ignoreDifferences:
+    # Helm/kubernetes-managed fields — do not fight over status.
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /status
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /status
+    - group: "*"
+      kind: "*"
+      jsonPointers:
+        - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
+        - /metadata/annotations/kubectl.kubernetes.io~1restartedAt
+        - /status
+{{- end }}
+{{- end }}

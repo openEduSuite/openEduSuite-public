@@ -49,7 +49,7 @@ public variants replace them systematically:
 | `hrz.uni-marburg.de`, `uni-marburg.de` (e.g. apt proxy) | `example.com` / `example.org` |
 | `*.openedusuite.org` deployment hosts, `mailDomain: openedusuite.org` | `*.example.org` / `example.org` |
 | `ghcr.io/opendesk-edu/*`, `ghcr.io/opendesk/*` images | `ghcr.io/openedusuite/*` |
-| `registry.gitlab.com/tbsweiss/opendesk-kubectl` | `registry.example.com/opendesk/kubectl` |
+| `registry.gitlab.com/<org>/opendesk-kubectl` | `registry.example.com/opendesk/kubectl` |
 | Internal LDAP DN `dc=swp-ldap,dc=internal`, `ums-ldap-server-primary` | `dc=example,dc=org`, `ldap` |
 | Internal IP allowlists (e.g. `192.168.3.201`) | `192.0.2.10` (RFC 5737 TEST-NET-1) |
 | Dev passwords (`sogo-password`, `sogo-ldap-password`) | `CHANGEME` |
@@ -84,6 +84,21 @@ Fixes applied on top of sanitization (also worth porting upstream):
   made it unparseable.
 - Empty per-resource annotation maps now render safely (`with` guards) instead
   of emitting a bare `{}` that broke YAML parsing.
+
+## GitOps wrappers (ArgoCD / kubara)
+
+The helmfile tree above is the portable substrate. On top of it this repo also
+ships the same GitOps wrapper production uses:
+
+- [`argocd/`](../argocd/README.md) — ArgoCD **App-of-Apps** (one `Application`
+  per service, rendered through the helmfile CMP). Install the CMP, apply the
+  root application, done.
+- [`kubara/`](../kubara/README.md) — kubara bootstraps ArgoCD + the platform
+  layer (cert-manager, kyverno, external-secrets, …); the openEduSuite apps
+  deploy through the same `argocd/` wrapper.
+
+Both render exactly these helmfiles — they add the GitOps operator, they do
+not add a second deployment format.
 
 ## Verifying a render
 

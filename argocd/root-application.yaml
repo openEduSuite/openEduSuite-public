@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+# ArgoCD root Application — openEduSuite App-of-Apps.
+#
+# Watches the openEduSuite-public repo and renders one ArgoCD Application per
+# openEduSuite service from the argocd/openedusuite-apps chart.
+#
+# Apply after the helmfile CMP is installed (argocd/README.md):
+#
+#   kubectl apply -f argocd/root-application.yaml
+#
+# REPLACE the repoURL with your fork before applying.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openedusuite-apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/openEduSuite/openEduSuite-public.git
+    targetRevision: main
+    path: argocd/openedusuite-apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 2
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

@@ -127,9 +127,10 @@ global:
 replicas: 1
 
 # Node selector for SOGo deployment
-# Set to the node running haproxy-ingress to avoid cross-node networking issues
+# Set to the node running your ingress controller to avoid cross-node networking issues.
+# --- public-variant placeholder: replace with your own node hostname or remove ---
 nodeSelector:
-  kubernetes.io/hostname: "vhrz2339"
+  kubernetes.io/hostname: "node-01.example.org"
 
 ingress:
   enabled: true

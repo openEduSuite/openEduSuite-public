@@ -1,0 +1,227 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+# ArgoCD App-of-Apps values for the openEduSuite public deployment variants.
+#
+# Every value here is a PLACEHOLDER — replace before deploying in your cluster
+# (see argocd/README.md). All domains/secrets live in
+# helmfile/environments/example.yaml and are honoured as-is by helmfile.
+#
+# Declaring an app here does NOT deploy it — set `enabled: false` to keep the
+# Application around but skip it, or remove the entry entirely.
+
+global:
+  # Repo containing this chart AND the helmfile tree. Fork openEduSuite-public
+  # and point ArgoCD at your fork.
+  repoURL: https://github.com/openEduSuite/openEduSuite-public.git
+  targetRevision: main
+  # Helmfile environment rendered by every child Application
+  # (maps to helmfile/environments/example.yaml).
+  helmfileEnvironment: example
+  # ArgoCD project the children join
+  project: default
+  # Where apps are installed
+  namespace: openedusuite
+  # ArgoCD namespace the child Application CRDs are created in
+  argocdNamespace: argocd
+  destinationServer: https://kubernetes.default.svc
+  # Extra env vars passed to the helmfile CMP (helmfile plugin). Empty here:
+  # all configuration is expressed in helmfile/environments/example.yaml.
+  # Example:
+  # helmfilePluginEnv:
+  #   - name: MASTER_PASSWORD
+  #     value: CHANGEME
+  helmfilePluginEnv: []
+
+# Child Applications. `release` = helmfile release name used to select
+# that app out of the shared helmfile tree (helmfile/helmfile.yaml.gotmpl).
+# Wave 1 = observability, wave 5 = all application services.
+apps:
+  # --- bigbluebutton ---
+  - name: bigbluebutton
+    enabled: true
+    phase: 5
+    release: bigbluebutton
+    description: 'openEduSuite bigbluebutton service'
+
+  # --- bookstack ---
+  - name: bookstack
+    enabled: true
+    phase: 5
+    release: bookstack
+    description: 'openEduSuite bookstack service'
+
+  # --- code-server ---
+  - name: code-server
+    enabled: true
+    phase: 5
+    release: code-server
+    description: 'openEduSuite code-server service'
+
+  # --- drawio ---
+  - name: drawio
+    enabled: true
+    phase: 5
+    release: drawio
+    description: 'openEduSuite drawio service'
+
+  # --- etherpad ---
+  - name: etherpad
+    enabled: true
+    phase: 5
+    release: etherpad
+    description: 'openEduSuite etherpad service'
+
+  # --- excalidraw ---
+  - name: excalidraw
+    enabled: true
+    phase: 5
+    release: excalidraw
+    description: 'openEduSuite excalidraw service'
+
+  # --- ilias ---
+  - name: ilias
+    enabled: true
+    phase: 5
+    release: ilias
+    description: 'openEduSuite ilias service'
+
+  # --- jupyterhub ---
+  - name: jupyterhub
+    enabled: true
+    phase: 5
+    release: jupyterhub
+    description: 'openEduSuite jupyterhub service'
+
+  # --- kasmvnc ---
+  - name: kasmvnc
+    enabled: true
+    phase: 5
+    release: kasmvnc
+    description: 'openEduSuite kasmvnc service'
+
+  # --- limesurvey ---
+  - name: limesurvey
+    enabled: true
+    phase: 5
+    release: limesurvey
+    description: 'openEduSuite limesurvey service'
+
+  # --- mayan-edms ---
+  - name: mayan-edms
+    enabled: true
+    phase: 5
+    release: mayan-edms
+    description: 'openEduSuite mayan-edms service'
+
+  # --- monitoring ---
+  - name: monitoring
+    enabled: true
+    phase: 1
+    release: blackbox-probes
+    description: 'Blackbox probes / observability health checks'
+
+  # --- moodle ---
+  - name: moodle
+    enabled: true
+    phase: 5
+    release: moodle
+    description: 'openEduSuite moodle service'
+
+  # --- n8n ---
+  - name: n8n
+    enabled: true
+    phase: 5
+    release: n8n
+    description: 'openEduSuite n8n service'
+
+  # --- ollama ---
+  - name: ollama
+    enabled: true
+    phase: 5
+    release: ollama
+    description: 'openEduSuite ollama service'
+
+  # --- open-webui ---
+  - name: open-webui
+    enabled: true
+    phase: 5
+    release: open-webui
+    description: 'openEduSuite open-webui service'
+
+  # --- opencloud ---
+  - name: opencloud
+    enabled: true
+    phase: 5
+    release: opendesk-opencloud
+    description: 'openEduSuite opencloud service'
+
+  # --- overleaf ---
+  - name: overleaf
+    enabled: true
+    phase: 5
+    release: overleaf
+    description: 'openEduSuite overleaf service'
+
+  # --- paperless-ngx ---
+  - name: paperless-ngx
+    enabled: true
+    phase: 5
+    release: paperless-ngx
+    description: 'openEduSuite paperless-ngx service'
+
+  # --- planka ---
+  - name: planka
+    enabled: true
+    phase: 5
+    release: planka
+    description: 'openEduSuite planka service'
+
+  # --- rstudio ---
+  - name: rstudio
+    enabled: true
+    phase: 5
+    release: rstudio
+    description: 'openEduSuite rstudio service'
+
+  # --- slidev ---
+  - name: slidev
+    enabled: true
+    phase: 5
+    release: slidev
+    description: 'openEduSuite slidev service'
+
+  # --- snipr ---
+  - name: snipr
+    enabled: true
+    phase: 5
+    release: snipr
+    description: 'openEduSuite snipr service'
+
+  # --- sogo ---
+  - name: sogo
+    enabled: true
+    phase: 5
+    release: sogo
+    description: 'openEduSuite sogo service'
+
+  # --- ttyd ---
+  - name: ttyd
+    enabled: true
+    phase: 5
+    release: ttyd
+    description: 'openEduSuite ttyd service'
+
+  # --- typo3 ---
+  - name: typo3
+    enabled: true
+    phase: 5
+    release: typo3
+    description: 'openEduSuite typo3 service'
+
+  # --- zammad ---
+  - name: zammad
+    enabled: true
+    phase: 5
+    release: zammad
+    description: 'openEduSuite zammad service'

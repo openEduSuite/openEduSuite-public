@@ -1,0 +1,81 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+# ArgoCD repo-server patch — helmfile sidecar.
+#
+# Applies to the `argocd-repo-server` Deployment in the `argocd` namespace:
+#
+#   kubectl patch deployment argocd-repo-server -n argocd --patch-file argocd/cmp-repo-server.yaml
+#
+# 1. An init container installs `helm` and `helmfile` into /custom-tools.
+# 2. A sidecar container runs argocd-cmp-server and loads the plugin defined
+#    in the cmp-helmfile ConfigMap.
+# 3. Registration: tell ArgocCD which ConfigMap contains plugin definitions:
+#
+#      kubectl patch configmap argocd-cmp-cm -n argocd --type merge -p '{
+#        "data": {"plugins": "cmp-helmfile"}}'
+#
+# Pin the helm/helmfile versions to a known-good pair for your ArgoCD release.
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: install-helm-tools
+          image: curlimages/curl:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+              HELM_VERSION="${HELM_VERSION:-v3.17.0}"
+              HELMFILE_VERSION="${HELMFILE_VERSION:-v0.171.0}"
+              curl -sL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+                | tar xz -C /custom-tools/ linux-amd64/helm
+              mv /custom-tools/linux-amd64/helm /custom-tools/helm
+              rmdir /custom-tools/linux-amd64
+              curl -sL "https://github.com/helmfile/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION#v}_linux_amd64.tar.gz" \
+                | tar xz -C /custom-tools/ helmfile
+              chmod +x /custom-tools/helm /custom-tools/helmfile
+              export PATH=/custom-tools:$PATH
+              helm plugin install https://github.com/databus23/helm-diff --version v3.9.14 || true
+              /custom-tools/helm version --short
+              /custom-tools/helmfile --version
+          env:
+            - name: HELM_VERSION
+              value: "v3.17.0"
+            - name: HELMFILE_VERSION
+              value: "v0.171.0"
+          volumeMounts:
+            - mountPath: /custom-tools
+              name: custom-tools
+      containers:
+        - name: helmfile
+          image: quay.io/argoproj/argocd:v3.0.12   # same image as repo-server
+          command:
+            - /usr/local/bin/argocd-cmp-server
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+          volumeMounts:
+            - mountPath: /home/argocd/cmp-server/config
+              name: cmp-plugin-config
+            - mountPath: /home/argocd/cmp-server/plugins
+              name: plugins
+            - mountPath: /custom-tools
+              name: custom-tools
+            - mountPath: /var/run/argocd
+              name: var-files
+            - mountPath: /tmp
+              name: tmp
+      volumes:
+        - name: custom-tools
+          emptyDir: {}
+        - name: cmp-plugin-config
+          configMap:
+            name: cmp-helmfile        # plugin definition (cmp-helmfile.yaml)
+        - name: plugins
+          emptyDir: {}
+        - name: var-files
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

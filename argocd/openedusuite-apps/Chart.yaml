@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: openedusuite-apps
+description: >
+  ArgoCD App-of-Apps for openEduSuite. Renders one ArgoCD Application per
+  openEduSuite helmfile app; each child Application renders the helmfile tree
+  (helmfile/helmfile.yaml.gotmpl) filtered to its release.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
