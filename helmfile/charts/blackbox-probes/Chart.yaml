@@ -1,0 +1,16 @@
+apiVersion: v2
+name: blackbox-probes
+description: |
+  Blackbox health-check probes for all openEduSuite ingress endpoints.
+  Deploys a ConfigMap with probe targets (HTTP, TCP, TLS) and a PrometheusRule
+  with alert definitions for probe failures. Designed to work with the existing
+  blackbox-exporter in the monitoring namespace.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - monitoring
+  - blackbox
+  - probes
+  - health-check
+  - observability

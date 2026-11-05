@@ -1,0 +1,24 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+PVC for Tempo trace storage (local backend).
+*/}}
+{{- if eq .Values.storage.backend "local" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tempo.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tempo.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage.local.size | quote }}
+  {{- if .Values.storage.local.storageClass }}
+  storageClassName: {{ .Values.storage.local.storageClass | quote }}
+  {{- end }}
+{{- end }}

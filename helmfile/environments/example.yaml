@@ -1,0 +1,182 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Example environment for the public openEduSuite deployment variants.
+# Every value here is a PLACEHOLDER — replace before deploying.
+# Convention: all public hostnames are <service>.example.org.
+
+global:
+  domain: example.org
+  hosts:
+    keycloak: id
+    opencloud: cloud
+  moodleSaml:
+    entityId: "https://lms.example.org/shibboleth"
+
+platform:
+  realm: example
+
+ingress:
+  enabled: true
+  className: nginx          # your ingress controller class (e.g. nginx, haproxy, traefik)
+  parameters:
+    bodySize:
+      ilias: 100m
+      etherpad: 50m
+    bodyTimeout:
+      ilias: 300s
+      etherpad: 300s
+
+apps:
+  keycloak:
+    host: id.example.org
+  sogo:
+    enabled: true
+    host: sogo.example.org
+    tlsSecret: tls-sogo.example.org
+    mailDomain: example.org
+    imapServer: imaps://mail:993
+    smtpServer: smtp://mail:587
+    sieveServer: sieve://mail:4190
+    memcachedHost: memcached:11211
+    persistence:
+      enabled: true
+    oidc:
+      enabled: true
+      clientId: sogo
+      # configUrl defaults to https://<apps.keycloak.host>/realms/<platform.realm>/.well-known/openid-configuration
+      configUrl: ""
+  etherpad:
+    enabled: true
+    oidc:
+      enabled: true
+  ilias:
+    enabled: true
+  moodle:
+    enabled: true
+  jupyterhub:
+    enabled: true
+  opencloud:
+    enabled: true
+  blackboxProbes:
+    enabled: true
+  otelCollector:
+    enabled: false
+  tempo:
+    enabled: false
+
+databases:
+  sogo:
+    host: postgresql
+    port: 5432
+    name: sogo
+    username: sogo
+    password: CHANGEME
+
+ldap:
+  host: ldap
+  port: 389
+  baseDN: dc=example,dc=org
+  sogoBindDN: uid=sogo,ou=services,dc=example,dc=org
+  sogoBindPassword: CHANGEME
+
+# Secrets: in production do NOT keep plaintext here — use SOPS/sealed-secrets/
+# external-secrets (see README). Values below are placeholders only.
+secrets:
+  keycloak:
+    clientSecret:
+      sogo: CHANGEME
+      opencloud: CHANGEME
+      etherpad: CHANGEME
+  opencloud:
+    jwtSecret: CHANGEME
+    transferSecret: CHANGEME
+    urlSigningSecret: CHANGEME
+    backchannelLogoutSecret: CHANGEME
+    machineAuthApiKey: CHANGEME
+    systemUserApiKey: CHANGEME
+    systemUserId: CHANGEME
+  moodleSaml:
+    idpCert: ""
+    idpMetadata: ""
+    spCert: ""
+    spKey: ""
+  shibboleth:
+    spCert: ""
+    spKey: ""
+
+persistence:
+  storageClassNames:
+    RWO: ""                  # e.g. your cluster's default StorageClass name
+  storages:
+    ilias:
+      storageClassName: ""
+    moodle:
+      storageClassName: ""
+    etherpad:
+      storageClassName: ""
+
+replicas:
+  ilias: 1
+  etherpad: 1
+
+resources:
+  opencloud: {}
+
+annotations:
+  ilias:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  moodle:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  etherpad:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  opencloud:
+    pod: {}
+    serviceAccount: {}
+
+backchannelLogout:
+  enabled: false
+  saml:
+    ilias:
+      enabled: false
+      verbose: false
+      sessionTerminationTimeout: 300
+      bindings:
+        httpPost: "https://lms.example.org/Shibboleth.sso/SAML2/POST/backchannel"
+        httpRedirect: "https://lms.example.org/Shibboleth.sso/SAML2/Redirect/backchannel"
+        soap: "https://lms.example.org/Shibboleth.sso/SAML2/SOAP/backchannel"
+      signature:
+        requireSignedRequests: true
+        signResponses: true
+    moodle:
+      enabled: false
+      verbose: false
+      sessionTerminationTimeout: 300
+      bindings:
+        soap: "https://lms.example.org/admin/webservice/backchannel.php"
+      signature:
+        requireSignedRequests: true
+        signResponses: true
+
+charts:
+  jupyterhub:
+    version: "4.4.0"         # matches vendor/charts/jupyterhub/Chart.yaml
+
+# Extra per-release values files (helmfile `values:` entries), per app
+customization:
+  release:
+    sogo: []
+    ilias: []
+    etherpad: []
+
+ilias:
+  command: []

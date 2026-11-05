@@ -252,6 +252,21 @@ Light/dark toggle in the header. Initial value follows the OS
 under `portal-theme` ([`src/theme.ts`](src/theme.ts)). Tailwind dark mode is
 class-based.
 
+## App deployment variants (helmfile/)
+
+Besides the portal, this repo ships **sanitized public variants of the app
+deployment manifests** under [`helmfile/`](helmfile/README.md) — the helmfile
+trees for ILIAS, SOGo, OpenCloud, Etherpad, JupyterHub, Moodle and the
+monitoring stack (blackbox probes / OTel / Tempo), plus the local Helm charts
+they use. All operator-specific values (domains, LDAP DNs, secrets, internal
+IPs, private registry references) are replaced by `example.org`/`CHANGEME`
+placeholders — see the [sanitization table](helmfile/README.md#sanitization-applied-to-these-variants).
+
+```bash
+cd helmfile
+helmfile -f helmfile.yaml.gotmpl -e example template   # renders all apps, fully offline
+```
+
 ## Project layout
 
 ```
@@ -259,6 +274,13 @@ class-based.
 ├── nginx.conf.template      # envsubst server config: SPA + feed proxies + health
 ├── index.html
 ├── public/                  # favicon + brand assets (logo, bird's-eye image)
+├── helmfile/                # sanitized app deployment variants (see above)
+│   ├── apps/edu/<app>/      # ilias, sogo, opencloud, etherpad, jupyterhub, moodle, monitoring
+│   ├── charts/              # local Helm charts used by the apps
+│   ├── vendor/charts/jupyterhub/  # vendored upstream chart
+│   ├── environments/example.yaml   # placeholder environment — edit before deploying
+│   └── helmfile.yaml.gotmpl
+├── LICENSES/                # license texts for AGPL components
 └── src/
     ├── config.ts            # /config.json loading, DEFAULT_CONFIG, types
     ├── config.default.json  # placeholder config shipped inside the image
@@ -287,6 +309,9 @@ it in `config.json` under `services` (and optionally in `layout.sections`).
 
 ## License
 
-[Apache-2.0](LICENSE) — © openEduSuite Contributors.
+[Apache-2.0](LICENSE) — © openEduSuite Contributors. Individual components may
+carry different licenses via their SPDX headers (several Helm charts are
+AGPL-3.0-or-later — see [LICENSES/](LICENSES/)); the vendored jupyterhub chart
+is upstream Apache-2.0.
 
 openEduSuite is based on [openDesk](https://github.com/Bundesdruckerei/opendesk).

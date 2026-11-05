@@ -1,0 +1,96 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+ConfigMap with Tempo configuration.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tempo.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tempo.labels" . | nindent 4 }}
+data:
+  tempo.yaml: |
+    stream_over_http_enabled: true
+    server:
+      http_listen_port: {{ .Values.service.httpPort }}
+      grpc_listen_port: {{ .Values.service.grpcPort }}
+      log_level: info
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:{{ .Values.service.otlpGrpcPort }}
+            http:
+              endpoint: 0.0.0.0:{{ .Values.service.otlpHttpPort }}
+      {{- with .Values.config.ingestion }}
+      ingestion_rate_strategy: {{ .rate_strategy }}
+      ingestion_burst_size: {{ .burst }}
+      ingestion_rate_limit_bytes: {{ .rate }}
+      {{- end }}
+
+    ingester:
+      max_block_duration: 30m
+      max_chunk_age: 1h
+      chunk_idle_period: 30m
+      trace_idle_period: 10s
+
+    compactor:
+      compaction_interval: {{ .Values.config.compaction.interval }}
+      retention_enabled: {{ .Values.config.retention.enabled }}
+      retention:
+        {{- if .Values.config.retention.duration }}
+        period: {{ .Values.config.retention.duration }}
+        {{- end }}
+
+    storage:
+      trace:
+        backend: {{ .Values.storage.backend }}
+        {{- if eq .Values.storage.backend "local" }}
+        local:
+          path: /var/tempo/traces
+          wal:
+            path: /var/tempo/wal
+        {{- end }}
+        {{- if eq .Values.storage.backend "s3" }}
+        s3:
+          endpoint: {{ .Values.storage.s3.endpoint | quote }}
+          bucket: {{ .Values.storage.s3.bucket | quote }}
+          region: {{ .Values.storage.s3.region | quote }}
+        {{- end }}
+        block:
+          max_block_bytes: 52428800  # 50MB
+        pool:
+          max_workers: 100
+          queue_depth: 10000
+
+    querier:
+      max_concurrent_queries: 20
+      {{- with .Values.config.query }}
+      query_ingester_until: {{ .max_search_depth }}s
+      {{- end }}
+
+    query_frontend:
+      search:
+        duration_slo: 5s
+        throughput_bytes_slo: 104857600  # 100MB/s
+
+    metrics_generator:
+      registry:
+        external_labels:
+          source: tempo
+          cluster: openedusuite
+      storage:
+        path: /var/tempo/generator/wal
+        remote_write:
+          - url: http://prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+
+    overrides:
+      defaults:
+        metrics_generator:
+          processors: [service-graphs, span-metrics]
+          generate_native_histograms: true

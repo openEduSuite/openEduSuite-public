@@ -1,0 +1,16 @@
+apiVersion: v2
+name: opentelemetry-collector
+description: |
+  OpenTelemetry Collector for distributed tracing.
+  Receives OTLP traces from applications and exports them to Tempo.
+  Part of the openEduSuite observability stack (Prometheus + Loki + Tempo + Grafana).
+type: application
+version: 0.1.0
+appVersion: "0.110.0"
+keywords:
+  - observability
+  - tracing
+  - opentelemetry
+  - otel
+  - tempo
+  - distributed-tracing

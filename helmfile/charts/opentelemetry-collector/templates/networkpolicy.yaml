@@ -1,0 +1,65 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+NetworkPolicy for the OpenTelemetry Collector.
+Allows ingress from all namespaces (apps send traces to the collector).
+*/}}
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "opentelemetry-collector.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "opentelemetry-collector.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "opentelemetry-collector.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow OTLP gRPC from anywhere
+    - from: []
+      ports:
+        - protocol: TCP
+          port: 4317
+    # Allow OTLP HTTP from anywhere
+    - from: []
+      ports:
+        - protocol: TCP
+          port: 4318
+    # Allow Zipkin from anywhere
+    - from: []
+      ports:
+        - protocol: TCP
+          port: 9411
+    # Allow metrics scraping from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8888
+  egress:
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow Tempo (if deployed)
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 4317
+    # Allow outbound HTTPS
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+{{- end }}

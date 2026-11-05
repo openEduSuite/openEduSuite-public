@@ -1,0 +1,37 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+Grafana datasource ConfigMap for Tempo.
+This ConfigMap is picked up by Grafana's datasource sidecar.
+*/}}
+{{- if .Values.grafana.datasource.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tempo.fullname" . }}-grafana-datasource
+  namespace: {{ .Values.grafana.datasource.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "tempo.labels" . | nindent 4 }}
+    grafana_datasource: "1"
+data:
+  tempo-datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: {{ .Values.grafana.datasource.name }}
+        type: tempo
+        access: proxy
+        url: http://{{ include "tempo.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.httpPort }}
+        isDefault: false
+        jsonData:
+          tracesToLogs:
+            datasourceUid: loki
+            filterByTraceID: true
+          tracesToMetrics:
+            datasourceUid: prometheus
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
+        editable: true
+{{- end }}

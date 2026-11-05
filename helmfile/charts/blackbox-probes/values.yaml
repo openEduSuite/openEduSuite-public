@@ -1,0 +1,376 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Blackbox Probes chart values
+# =============================
+# This chart deploys:
+#   1. A ConfigMap listing all probe targets (consumed by Prometheus blackbox-exporter)
+#   2. A PrometheusRule with alert definitions for probe failures
+#
+# The blackbox-exporter itself is deployed separately in the monitoring namespace
+# (see ansible-baremetal-k3s/k8s/monitoring/prometheus-live-blackbox.yml for module config).
+#
+# Probe modules (defined in blackbox-exporter ConfigMap):
+#   http_alive  — HTTP GET, accepts 200/204/301/302/307/308/400/401/403/404/405/429
+#   http_2xx    — HTTP GET, accepts 200/302/404
+#   tcp_connect — TCP connect
+#   tls_connect — TCP connect with TLS
+
+# ---------------------------------------------------------------------------
+# Namespace (defaults to Release namespace)
+# ---------------------------------------------------------------------------
+namespace: ""
+
+# ---------------------------------------------------------------------------
+# Probe targets
+# ---------------------------------------------------------------------------
+# Each target is probed by the blackbox-exporter. The Prometheus scrape config
+# in ansible-baremetal-k3s references these targets.
+probes:
+
+  # --- HTTP probes (http_alive module) ---
+  # All public ingress endpoints. Accepts 200/302/401/403 (redirects, auth gates).
+  http:
+    # Core platform
+    - name: home-portal
+      url: https://example.org/
+      severity: critical
+      category: platform
+    - name: home-dashboard
+      url: https://home.example.org/
+      severity: critical
+      category: platform
+    - name: admin-portal
+      url: https://admin.example.org/
+      severity: warning
+      category: platform
+    - name: admin-home
+      url: https://admin.home.example.org/
+      severity: warning
+      category: platform
+    - name: keycloak
+      url: https://id.example.org/
+      severity: critical
+      category: sso
+    - name: keycloak-oidc-discovery
+      url: https://id.example.org/realms/openedusuite/.well-known/openid-configuration
+      severity: critical
+      category: sso
+    - name: keycloak-auth-endpoint
+      url: "https://id.example.org/realms/openedusuite/protocol/openid-connect/auth?client_id=account-console&response_type=code&scope=openid&redirect_uri=https%3A%2F%2Fid.example.org%2Frealms%2Fopenedusuite%2Faccount&state=probe"
+      severity: critical
+      category: sso
+    - name: keycloak-token-endpoint
+      url: https://id.example.org/realms/openedusuite/protocol/openid-connect/token
+      severity: critical
+      category: sso
+    - name: argocd
+      url: https://argocd.example.org/
+      severity: warning
+      category: platform
+    - name: grafana
+      url: https://grafana.home.example.org/
+      severity: warning
+      category: monitoring
+
+    # Education services
+    - name: ilias
+      url: https://lms.example.org/
+      severity: critical
+      category: education
+    - name: ilias-login
+      url: https://lms.example.org/login.php
+      severity: critical
+      category: education
+    - name: indico
+      url: https://indico.example.org/
+      severity: warning
+      category: education
+    - name: overleaf
+      url: https://overleaf.example.org/
+      severity: warning
+      category: education
+    - name: n8n
+      url: https://n8n.example.org/
+      severity: warning
+      category: education
+    - name: operaton
+      url: https://operaton.example.org/
+      severity: warning
+      category: education
+    - name: ai
+      url: https://ai.example.org/
+      severity: warning
+      category: education
+    - name: ollama
+      url: https://ollama.example.org/
+      severity: warning
+      category: education
+    - name: ollama-0
+      url: https://ollama-0.example.org/
+      severity: warning
+      category: education
+    - name: ollama-1
+      url: https://ollama-1.example.org/
+      severity: warning
+      category: education
+
+    # Collaboration
+    - name: element
+      url: https://chat.example.org/
+      severity: critical
+      category: collaboration
+    - name: matrix
+      url: https://matrix.example.org/
+      severity: critical
+      category: collaboration
+    - name: opencloud
+      url: https://cloud.example.org/
+      severity: critical
+      category: collaboration
+    - name: nextcloud
+      url: https://nextcloud.example.org/
+      severity: warning
+      category: collaboration
+    - name: opencloud-login
+      url: https://cloud.example.org/login
+      severity: critical
+      category: collaboration
+    - name: hedgedoc
+      url: https://hedgedoc.example.org/
+      severity: warning
+      category: collaboration
+    - name: drawio
+      url: https://drawio.example.org/
+      severity: warning
+      category: collaboration
+    - name: excalidraw
+      url: https://excalidraw.example.org/
+      severity: warning
+      category: collaboration
+    - name: intercom
+      url: https://intercom.example.org/
+      severity: warning
+      category: collaboration
+
+    # Mail
+    - name: sogo
+      url: https://sogo.example.org/
+      severity: critical
+      category: mail
+    - name: sogo-sogo
+      url: https://sogo.example.org/SOGO/
+      severity: critical
+      category: mail
+    - name: sogo6
+      url: https://sogo6.example.org/
+      severity: critical
+      category: mail
+    - name: sogo-staff
+      url: https://sogo-staff.example.org/
+      severity: warning
+      category: mail
+    - name: sogo6-staff
+      url: https://sogo6-staff.example.org/
+      severity: warning
+      category: mail
+    - name: sogo-students
+      url: https://sogo-students.example.org/
+      severity: warning
+      category: mail
+    - name: sogo6-students
+      url: https://sogo6-students.example.org/
+      severity: warning
+      category: mail
+    - name: mail-webmail
+      url: https://mail.example.org/
+      severity: critical
+      category: mail
+    - name: stalwart
+      url: https://stalwart.example.org/
+      severity: critical
+      category: mail
+    - name: webmail
+      url: https://webmail.example.org/
+      severity: warning
+      category: mail
+
+    # Productivity
+    - name: openproject
+      url: https://openproject.example.org/
+      severity: warning
+      category: productivity
+    - name: openproject-login
+      url: https://openproject.example.org/login
+      severity: warning
+      category: productivity
+    - name: grist
+      url: https://grist.example.org/
+      severity: warning
+      category: productivity
+    - name: discourse
+      url: https://discourse.example.org/
+      severity: warning
+      category: productivity
+    - name: kitodo
+      url: https://kitodo.example.org/
+      severity: warning
+      category: productivity
+    - name: toss
+      url: https://toss.example.org/
+      severity: warning
+      category: productivity
+    - name: typst
+      url: https://typst.example.org/
+      severity: warning
+      category: productivity
+    - name: invoicing
+      url: https://invoicing.example.org/
+      severity: warning
+      category: productivity
+    - name: rt
+      url: https://rt.example.org/
+      severity: warning
+      category: productivity
+
+    # Infrastructure
+    - name: bbb
+      url: https://bbb.example.org/
+      severity: warning
+      category: infrastructure
+    - name: s3
+      url: https://s3.home.example.org/
+      severity: warning
+      category: infrastructure
+    - name: kubara-test
+      url: https://kubara-test.example.org/
+      severity: warning
+      category: infrastructure
+
+    # Wiki
+    - name: xwiki
+      url: https://xwiki.example.org/
+      severity: warning
+      category: wiki
+    - name: xwiki-staff
+      url: https://xwiki-staff.example.org/
+      severity: warning
+      category: wiki
+
+    # AI/LLM
+    - name: ollama-ui
+      url: https://ollama-ui.example.org/
+      severity: warning
+      category: education
+
+    # Deprecated/legacy (kept for monitoring until decommissioned)
+    - name: dify
+      url: https://dify.example.org/
+      severity: warning
+      category: legacy
+    - name: ewoks
+      url: https://ewoks.example.org/
+      severity: warning
+      category: legacy
+
+  # --- TCP probes (tcp_connect module) ---
+  tcp:
+    - name: stalwart-smtp
+      target: stalwart.openedusuite.svc.cluster.local:25
+      severity: critical
+      category: mail
+    - name: stalwart-submission
+      target: stalwart.openedusuite.svc.cluster.local:587
+      severity: critical
+      category: mail
+    - name: stalwart-imap
+      target: stalwart.openedusuite.svc.cluster.local:143
+      severity: critical
+      category: mail
+
+  # --- TLS probes (tls_connect module) ---
+  tls:
+    - name: stalwart-smtps
+      target: stalwart.openedusuite.svc.cluster.local:465
+      severity: critical
+      category: mail
+    - name: stalwart-imaps
+      target: stalwart.openedusuite.svc.cluster.local:993
+      severity: critical
+      category: mail
+
+  # --- SSO flow probes (http_alive module) ---
+  # These verify the full SSO redirect chain for each app.
+  ssoFlows:
+    - name: keycloak-oidc-discovery
+      url: https://id.example.org/realms/openedusuite/.well-known/openid-configuration
+      severity: critical
+    - name: keycloak-auth-endpoint
+      url: "https://id.example.org/realms/openedusuite/protocol/openid-connect/auth?client_id=account-console&response_type=code&scope=openid&redirect_uri=https%3A%2F%2Fid.example.org%2Frealms%2Fopenedusuite%2Faccount&state=probe"
+      severity: critical
+    - name: keycloak-token-endpoint
+      url: https://id.example.org/realms/openedusuite/protocol/openid-connect/token
+      severity: critical
+    - name: matrix-login
+      url: https://matrix.example.org/_matrix/client/v3/login
+      severity: warning
+    - name: opencloud-login
+      url: https://cloud.example.org/login
+      severity: warning
+    - name: ilias-login
+      url: https://lms.example.org/login.php
+      severity: warning
+    - name: openproject-login
+      url: https://openproject.example.org/login
+      severity: warning
+    - name: sogo-login
+      url: https://sogo.example.org/SOGO/
+      severity: warning
+    - name: portal-home
+      url: https://home.example.org/
+      severity: warning
+    - name: bbb
+      url: https://bbb.example.org/
+      severity: warning
+    - name: dify
+      url: https://dify.example.org/
+      severity: warning
+    - name: drawio
+      url: https://drawio.example.org/
+      severity: warning
+    - name: excalidraw
+      url: https://excalidraw.example.org/
+      severity: warning
+    - name: n8n
+      url: https://n8n.example.org/
+      severity: warning
+    - name: operaton
+      url: https://operaton.example.org/
+      severity: warning
+
+# ---------------------------------------------------------------------------
+# Alerting
+# ---------------------------------------------------------------------------
+alerts:
+  enabled: true
+  # Alert when any probe fails for more than 3 minutes
+  probeFailedFor: 3m
+  # Alert when SSO core endpoints fail for more than 1 minute
+  ssoFailedFor: 1m
+  # Alert when app login endpoints fail for more than 5 minutes
+  appLoginFailedFor: 5m
+  # Alert when probe returns 5xx for more than 5 minutes
+  probe5xxFor: 5m
+
+# ---------------------------------------------------------------------------
+# Blackbox exporter config
+# ---------------------------------------------------------------------------
+blackboxExporter:
+  # The blackbox-exporter service address (in monitoring namespace)
+  address: blackbox-exporter.monitoring.svc.cluster.local:9115
+  # The module to use for HTTP probes
+  httpModule: http_alive
+  # The module to use for TCP probes
+  tcpModule: tcp_connect
+  # The module to use for TLS probes
+  tlsModule: tls_connect

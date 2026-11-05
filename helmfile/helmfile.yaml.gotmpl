@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+# Public example root helmfile for the openEduSuite app deployment variants.
+#
+# Usage:
+#   1. Edit environments/example.yaml — replace every placeholder
+#      (domains, LDAP DNs, secrets, storage classes, ...).
+#   2. Render to check:   helmfile -e example template
+#      Deploy:             helmfile -e example apply
+#
+# Only the edu app variants shipped in this repo are included
+# (apps/edu/*/helmfile.yaml.gotmpl). Charts referenced via ../../../charts/
+# are the sanitized local charts in ./charts; jupyterhub uses the vendored
+# upstream chart in ./vendor/charts/jupyterhub.
+environments:
+  example:
+    values:
+      - environments/example.yaml
+
+# No remote chart repositories needed: all charts are local (./charts) or
+# vendored (./vendor/charts/jupyterhub). Add repositories here if you extend
+# the subset with charts that have remote dependencies (e.g. bitnami OCI).
+
+helmfiles:
+  - path: apps/edu/*/helmfile.yaml.gotmpl
+    values:
+      - environments/example.yaml

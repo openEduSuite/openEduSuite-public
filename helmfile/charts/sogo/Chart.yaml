@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+apiVersion: v2
+name: sogo
+description: SOGo groupware server (email, calendar, contacts) — alternative to OX App Suite
+type: application
+version: 0.2.0
+appVersion: "5.12.9"
+keywords:
+  - groupware
+  - email
+  - calendar
+  - contacts
+  - sogo
+home: https://www.sogo.nu/
+sources:
+  - https://github.com/Alinto/sogo
+maintainers:
+  - name: openEduSuite Contributors
+annotations:
+  artifacthub.io/changes: |
+    - Add comprehensive helm-unittest test coverage
+    - Add CI values for template rendering validation
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/openEduSuite/openEduSuite-public

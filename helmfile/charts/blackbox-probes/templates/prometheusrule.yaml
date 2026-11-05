@@ -1,0 +1,106 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+PrometheusRule with alert definitions for blackbox probe failures.
+
+Alerts:
+  - BlackboxProbeFailed: Any HTTP/TCP/TLS probe failing for >3m
+  - BlackboxSSOCoreDown: SSO core endpoints (Keycloak OIDC/auth/token) failing for >1m
+  - BlackboxAppLoginFailed: App login endpoints failing for >5m
+  - BlackboxProbe5xx: Probe returning HTTP 5xx for >5m
+  - BlackboxSSLExpiringSoon: SSL certificate expiring within 30 days
+  - BlackboxSSOGateFailed: SSO gate endpoints failing for >3m
+*/}}
+{{- if .Values.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "blackbox-probes.fullname" . }}-alerts
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "blackbox-probes.labels" . | nindent 4 }}
+    prometheus: kube-prometheus-stack
+spec:
+  groups:
+  # --- Generic probe failures ---
+  - name: blackbox-probes
+    rules:
+    - alert: BlackboxProbeFailed
+      expr: probe_success{job=~"openedusuite-vhosts|sso-flows|stalwart-smtp|stalwart-smtps|stalwart-imaps"} == 0
+      for: {{ .Values.alerts.probeFailedFor }}
+      labels:
+        severity: warning
+        category: availability
+      annotations:
+        summary: "Blackbox probe failing: {{ "{{ $labels.instance }}" }}"
+        description: "Blackbox probe for {{ "{{ $labels.instance }}" }} (job: {{ "{{ $labels.job }}" }}) has been failing for more than {{ .Values.alerts.probeFailedFor }}."
+        impact: "Service may be unreachable for users"
+        action: "kubectl get pods -A | grep -i {{ "{{ $labels.instance }}" }}; check ingress and backend pods"
+
+    - alert: BlackboxProbe5xx
+      expr: probe_http_status_code{job=~"openedusuite-vhosts|sso-flows"} >= 500
+      for: {{ .Values.alerts.probe5xxFor }}
+      labels:
+        severity: critical
+        category: availability
+      annotations:
+        summary: "Blackbox probe returning 5xx: {{ "{{ $labels.instance }}" }}"
+        description: "Probe for {{ "{{ $labels.instance }}" }} is returning HTTP {{ "{{ $value }}" }} — backend is erroring"
+        impact: "Users see server errors"
+        action: "Check application pods and logs for {{ "{{ $labels.instance }}" }}"
+
+    - alert: BlackboxSSLExpiringSoon
+      expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 30
+      for: 1h
+      labels:
+        severity: warning
+        category: tls
+      annotations:
+        summary: "SSL certificate expiring soon: {{ "{{ $labels.instance }}" }}"
+        description: "SSL certificate for {{ "{{ $labels.instance }}" }} expires in {{ "{{ $value }}" }} days"
+        impact: "Service will become unavailable when certificate expires"
+        action: "Check cert-manager and certificate renewal; kubectl get cert -A"
+
+  # --- SSO core endpoints ---
+  - name: blackbox-sso
+    rules:
+    - alert: BlackboxSSOCoreDown
+      expr: probe_success{job="sso-flows",probe=~"sso-keycloak-(oidc-discovery|auth-endpoint|token-endpoint)"} == 0
+      for: {{ .Values.alerts.ssoFailedFor }}
+      labels:
+        severity: critical
+        category: sso
+      annotations:
+        summary: "SSO core endpoint down: {{ "{{ $labels.probe }}" }}"
+        description: "Keycloak {{ "{{ $labels.probe }}" }} has been failing for more than {{ .Values.alerts.ssoFailedFor }} — all app logins are blocked"
+        impact: "No login/SSO flow possible app-wide"
+        action: "kubectl -n openedusuite get pods | grep keycloak; check Keycloak logs and realm health"
+
+    - alert: BlackboxSSOGateFailed
+      expr: probe_success{job="sso-flows",probe=~"sso-.+-gate"} == 0
+      for: {{ .Values.alerts.appLoginFailedFor }}
+      labels:
+        severity: warning
+        category: sso
+      annotations:
+        summary: "SSO gate failed: {{ "{{ $labels.probe }}" }}"
+        description: "SSO gate endpoint {{ "{{ $labels.instance }}" }} ({{ "{{ $labels.probe }}" }}) is not responding with 2xx/3xx"
+        impact: "Login to this app may be broken"
+        action: "Check oauth2-proxy / Bridge pods for this app; verify Keycloak client config"
+
+  # --- TCP/TLS probes (mail server) ---
+  - name: blackbox-mail
+    rules:
+    - alert: BlackboxMailProbeFailed
+      expr: probe_success{job=~"stalwart-smtp|stalwart-smtps|stalwart-imaps"} == 0
+      for: 5m
+      labels:
+        severity: critical
+        category: mail
+      annotations:
+        summary: "Mail server probe failed: {{ "{{ $labels.probe }}" }}"
+        description: "Stalwart mail server {{ "{{ $labels.probe }}" }} probe has been failing for more than 5 minutes"
+        impact: "Mail delivery/receipt may be affected"
+        action: "kubectl -n openedusuite get pods | grep stalwart; check stalwart logs"
+{{- end }}

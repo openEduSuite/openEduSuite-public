@@ -1,0 +1,14 @@
+suite: service
+templates:
+  - service.yaml
+tests:
+  - it: renders default service
+    asserts:
+      - isKind:
+          of: Service
+      - matchRegex:
+          path: metadata.name
+          pattern: .*-sogo
+      - equal:
+          path: spec.ports[0].port
+          value: 80

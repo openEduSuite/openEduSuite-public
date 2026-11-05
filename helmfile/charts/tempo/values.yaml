@@ -1,0 +1,120 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Tempo chart values
+# ==================
+# Grafana Tempo is a distributed tracing backend that stores traces
+# received from the OpenTelemetry Collector. It integrates with Grafana
+# for trace visualization.
+
+# ---------------------------------------------------------------------------
+# Image
+# ---------------------------------------------------------------------------
+image:
+  repository: grafana/tempo
+  tag: "2.6.0"
+  pullPolicy: IfNotPresent
+
+# ---------------------------------------------------------------------------
+# Storage
+# ---------------------------------------------------------------------------
+# Tempo stores traces in a local PVC by default. For production, use S3.
+storage:
+  # "local" or "s3"
+  backend: local
+  # Local storage (PVC)
+  local:
+    size: 50Gi
+    storageClass: ""
+  # S3 storage (for production)
+  s3:
+    endpoint: ""
+    bucket: ""
+    region: ""
+    accessKey: ""
+    secretKey: ""
+
+# ---------------------------------------------------------------------------
+# Tempo configuration
+# ---------------------------------------------------------------------------
+config:
+  # Stream ingestion
+  ingestion:
+    rate_strategy: local
+    burst: 100000
+    rate: 50000
+  # Retention
+  retention:
+    enabled: true
+    duration: 168h  # 7 days
+  # Query
+  query:
+    max_search_depth: 10
+  # Compaction
+  compaction:
+    interval: 1h
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
+service:
+  type: ClusterIP
+  # OTLP gRPC (receives traces from collector)
+  otlpGrpcPort: 4317
+  # OTLP HTTP
+  otlpHttpPort: 4318
+  # Tempo query API (used by Grafana)
+  httpPort: 3200
+  # GRPC server
+  grpcPort: 9095
+  # Metrics (for Prometheus)
+  metricsPort: 3204
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# ---------------------------------------------------------------------------
+# Monitoring
+# ---------------------------------------------------------------------------
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /metrics
+    port: metrics
+    labels:
+      release: kube-prometheus-stack
+
+# ---------------------------------------------------------------------------
+# Grafana integration
+# ---------------------------------------------------------------------------
+grafana:
+  # If enabled, a Grafana datasource ConfigMap is created
+  datasource:
+    enabled: true
+    # Datasource name in Grafana
+    name: Tempo
+    # Grafana namespace
+    namespace: monitoring
+
+# ---------------------------------------------------------------------------
+# NetworkPolicy
+# ---------------------------------------------------------------------------
+networkPolicy:
+  enabled: true
+
+# ---------------------------------------------------------------------------
+# Node selector / tolerations
+# ---------------------------------------------------------------------------
+nodeSelector: {}
+tolerations: []
+affinity: {}

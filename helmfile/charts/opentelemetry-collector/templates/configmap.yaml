@@ -1,0 +1,84 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+ConfigMap with the OpenTelemetry Collector configuration.
+Both agent (DaemonSet) and gateway (Deployment) use this config,
+but the gateway's exporter points to Tempo while the agent's
+exporter points to the gateway.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opentelemetry-collector.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "opentelemetry-collector.labels" . | nindent 4 }}
+data:
+  collector.yaml: |
+    receivers:
+      otlp:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+      zipkin:
+        endpoint: 0.0.0.0:9411
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1024
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resource:
+        attributes:
+          - key: deployment.environment
+            value: openedusuite
+            action: upsert
+          - key: service.namespace
+            value: openedusuite
+            action: upsert
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 50000
+        expected_new_traces_per_sec: 100
+        policies:
+          - name: errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          - name: slow
+            type: latency
+            latency:
+              threshold_ms: 1000
+          - name: sample
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
+
+    exporters:
+      {{- if .Values.tempo.enabled }}
+      otlp/tempo:
+        endpoint: {{ .Values.tempo.address | quote }}
+        tls:
+          insecure: true
+      {{- end }}
+      debug:
+        verbosity: basic
+
+    service:
+      telemetry:
+        logs:
+          level: info
+      pipelines:
+        traces:
+          receivers: [otlp, zipkin]
+          processors: [memory_limiter, resource, tail_sampling, batch]
+          exporters:
+            {{- if .Values.tempo.enabled }}
+            - otlp/tempo
+            {{- end }}
+            - debug

@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+appVersion: "1.9.9"
+description: A Helm chart for Etherpad collaborative editor
+name: etherpad
+type: application
+version: 0.1.0

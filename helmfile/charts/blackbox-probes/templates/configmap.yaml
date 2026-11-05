@@ -1,0 +1,57 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+ConfigMap with all blackbox probe targets.
+Consumed by the Prometheus blackbox-exporter scrape configuration.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "blackbox-probes.fullname" . }}-targets
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "blackbox-probes.labels" . | nindent 4 }}
+data:
+  # HTTP probe targets (http_alive module)
+  http-targets.yaml: |
+    {{- range .Values.probes.http }}
+    - name: {{ .name | quote }}
+      url: {{ .url | quote }}
+      severity: {{ .severity | quote }}
+      category: {{ .category | quote }}
+    {{- end }}
+
+  # TCP probe targets (tcp_connect module)
+  tcp-targets.yaml: |
+    {{- range .Values.probes.tcp }}
+    - name: {{ .name | quote }}
+      target: {{ .target | quote }}
+      severity: {{ .severity | quote }}
+      category: {{ .category | quote }}
+    {{- end }}
+
+  # TLS probe targets (tls_connect module)
+  tls-targets.yaml: |
+    {{- range .Values.probes.tls }}
+    - name: {{ .name | quote }}
+      target: {{ .target | quote }}
+      severity: {{ .severity | quote }}
+      category: {{ .category | quote }}
+    {{- end }}
+
+  # SSO flow probe targets (http_alive module)
+  sso-flow-targets.yaml: |
+    {{- range .Values.probes.ssoFlows }}
+    - name: {{ .name | quote }}
+      url: {{ .url | quote }}
+      severity: {{ .severity | quote }}
+    {{- end }}
+
+  # Summary: total probe counts
+  probe-count.txt: |
+    http_probes={{ .Values.probes.http | len }}
+    tcp_probes={{ .Values.probes.tcp | len }}
+    tls_probes={{ .Values.probes.tls | len }}
+    sso_flow_probes={{ .Values.probes.ssoFlows | len }}
+    total={{ add (add (add (.Values.probes.http | len) (.Values.probes.tcp | len)) (.Values.probes.tls | len)) (.Values.probes.ssoFlows | len) }}

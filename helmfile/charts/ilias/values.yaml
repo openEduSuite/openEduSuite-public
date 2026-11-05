@@ -1,0 +1,297 @@
+ilias:
+  monitoring:
+    enabled: false
+    interval: 30s
+    path: /health
+    port: http
+    labels:
+      release: kube-prometheus-stack
+
+  image: ghcr.io/openedusuite/ilias-shibboleth
+  tag: "9-php8.2-apache"
+  port: 80
+  autoSetup: true
+  autoUpdate: 0 # Same as autoSetup if ILIAS >= 7
+  devMode: 0
+  installArguments: ""
+  updateArguments: "" # Same as installArguments if ILIAS >= 7
+  skipUpdate: 0 # Only for ILIAS < 6
+  db:
+    host: "" # Will be set by mariadb chart if left empty
+    user: ilias
+    password: "" # Overridden by mariadb.auth.rootPassword if not empty
+    name: ilias
+    dump: setup/sql/ilias3.sql
+  clientName: default
+  hostName: "" # Defaults to the pod's hostname
+  timezone: Europe/Berlin
+  maxUploadSize: 200M
+  errorsPath: /var/iliasdata/ilias/errors
+  memoryLimit: 4096M
+  rootPassword: ""
+  defaultSkin: default
+  defaultStyle: delos
+  sessionLifetime: 1800
+  dumpAutoload: 0
+  phpConfig: |-
+    memory_limit = {{ .Values.ilias.memoryLimit }}
+    error_reporting = E_ALL & ~E_NOTICE & ~E_WARNING & ~E_STRICT
+    log_errors = On
+    max_execution_time = 900
+    max_input_time = 900
+    max_input_vars = 10000
+    upload_max_filesize = {{ .Values.ilias.maxUploadSize }}
+    post_max_size = {{ .Values.ilias.maxUploadSize }}
+    session.gc_maxlifetime = {{ .Values.ilias.sessionLifetime }}
+
+    opcache.enable=1
+    opcache.enable_cli=1
+    opcache.interned_strings_buffer=8
+    opcache.max_accelerated_files=10000
+    opcache.memory_consumption=128
+    opcache.save_comments=1
+    opcache.revalidate_freq=1
+  clientIni: |-
+    ; <?php exit; ?>
+    [server]
+    start = ./login.php
+
+    [client]
+    name = {{ .Values.ilias.clientName }}
+    description =
+    access = 1
+
+    [db]
+    type = innodb
+    host = {{ include "ilias.dbHost" . }}
+    user = {{ include "ilias.dbUser" . }}
+    pass = {{ include "ilias.dbPassword" . }}
+    name = {{  include "ilias.dbName" . | quote }}
+    port = 3306
+
+    [auth]
+    table = usr_data
+    usercol = login
+    passcol = passwd
+
+    [language]
+    default = en
+    path = ./lang
+
+    [layout]
+    skin = {{ .Values.ilias.defaultSkin }}
+    style = {{ .Values.ilias.defaultStyle }}
+
+    [session]
+    expire = {{ .Values.ilias.sessionLifetime }}
+
+    [system]
+    ROOT_FOLDER_ID = 1
+    SYSTEM_FOLDER_ID = 9
+    ROLE_FOLDER_ID = 8
+    MAIL_SETTINGS_ID = 12
+    MAXLENGTH_OBJ_TITLE = 65
+    MAXLENGTH_OBJ_DESC = 123
+    DEBUG = 0
+    DEVMODE = {{ .Values.ilias.devMode }}
+
+    [cache]
+    activate_global_cache = 0
+    global_cache_service_type = 0
+  setupJson: |-
+    {
+        "common" : {
+            "client_id" : "{{ .Values.ilias.clientName }}"
+        },
+        "database" : {
+            "type" : "innodb",
+            "host" : "{{ include "ilias.dbHost" . }}",
+            "database" : "{{  include "ilias.dbName" . }}",
+            "user" : "{{  include "ilias.dbUser" . }}",
+            "password" : "{{ include "ilias.dbPassword" . }}",
+            "path_to_db_dump" : "setup/sql/ilias3.sql",
+            "port" : "3306",
+            "create_database": false
+        },
+        "filesystem" : {
+            "data_dir" : "/var/iliasdata/ilias"
+        },
+        "http" : {
+            "path" : "http://{{ .Values.ilias.hostName }}"
+        },
+        "systemfolder" : {
+            "contact" : {
+                "firstname" : "Systemadministrator",
+                "lastname" : "ILIAS",
+                "email" : "noreply@opendesk.example.com"
+            }
+        },
+        "webservices" : {
+            "rpc_server_host" : "{{ .Release.Name }}-ilias-rpc",
+            "rpc_server_port" : "{{ .Values.iliasRPCServer.port }}"
+        }
+    }
+  iliasIni: |-
+    ; <?php exit; ?>
+    [server]
+    http_path = http://{{ .Values.ilias.hostName }}
+    absolute_path = /var/www/html
+    presetting =
+    timezone = {{ .Values.ilias.timezone }}
+
+    [clients]
+    path = data
+    inifile = client.ini.php
+    datadir = /var/www/html/data
+    default = {{ .Values.ilias.clientName }}
+    list = 0
+
+    [tools]
+    convert = /usr/bin/convert
+    zip = /usr/bin/zip
+    unzip = /usr/bin/unzip
+    java =
+    htmldoc =
+    ffmpeg = /usr/bin/ffmpeg
+    ghostscript = /usr/bin/gs
+    latex =
+    phantomjs = /usr/local/bin/phantomjs
+    vscantype =
+    scancommand =
+    cleancommand =
+
+    [log]
+    ; log to php://stdout (missing slash is added during concat by ilias itself)
+    path = php:/
+    file = stdout
+    enabled = 1
+    level = WARNING
+    error_path = {{ .Values.ilias.errorsPath }}
+
+    [https]
+    auto_https_detect_enabled = 1
+    auto_https_detect_header_name = X_FORWARDED_PROTO
+    auto_https_detect_header_value = https
+  volumes:
+    data: # PersistentVolumeClaim configuration for /var/www/html/data
+      size: 4Gi
+      accessMode: ReadWriteMany
+      # storageClass: ""
+    iliasdata: # PersistentVolumeClaim configuration for /var/iliasdata/ilias
+      size: 4Gi
+      accessMode: ReadWriteMany
+      # storageClass: ""
+  resources:  # Resource requests and limits for the ilias pod.
+    requests:
+      cpu: 200m
+      memory: 4G
+    limits:
+      cpu: 3
+      memory: 6G
+
+iliasRPCServer:
+  image: srsolutions/ilias-ilserver
+  tag: 9-openjdk17-jre
+  nicId: 0
+  logLevel: "INFO"
+  threads: 1
+  ramBufferSize: 256
+  maxFileSize: 500
+  port: 11111
+  iliasIni: |-
+    [server]
+    absolute_path = /var/www/html/
+
+    [clients]
+    inifile = client.ini.php
+    path = data
+    datadir = iliasdata
+  ilServerProperties: |-
+    [Server]
+    IpAddress = 0.0.0.0
+    Port = {{ .Values.iliasRPCServer.port }}
+    IndexPath = /var/lucenedata/ilias
+    LogFile = /dev/stdout
+    LogLevel = {{ .Values.iliasRPCServer.logLevel }}
+    NumThreads = {{ .Values.iliasRPCServer.threads }}
+    RamBufferSize = {{ .Values.iliasRPCServer.ramBufferSize }}
+    IndexMaxFileSizeMB = {{ .Values.iliasRPCServer.maxFileSize }}
+
+    [Client1]
+    ClientId = {{ .Values.ilias.clientName }}
+    NicId = {{ .Values.iliasRPCServer.nicId }}
+    IliasIniPath = /app/ilias.ini.php
+  volumes:
+    lucene:
+      size: 4Gi
+      accessMode: ReadWriteOnce
+      # storageClass: ""
+
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+extraVolumes: []
+      # - name: my-volume
+      #   mountPath: /path/in/container
+      #   readOnly: false # Optional
+
+extraVolumeMounts: []
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx" # Or your ingress controller class
+    # Add other annotations as needed
+  hosts:
+    - host: lms.opendesk.example.com
+      paths:
+        - path: /
+          pathType: Prefix # Or ImplementationSpecific, Exact
+  tls:
+    - secretName: ilias-tls # Create this secret with your certificate
+      hosts:
+        - lms.opendesk.example.com
+
+# MariaDB is now provided by the standalone helmfile chart:
+# openedusuite/helmfile/apps/edu/mariadb/
+# This section is kept for backward compatibility only.
+mariadb:
+  enabled: false
+
+mariadbgalera:
+  enabled: false
+cronjob:
+  enabled: true
+  image: ghcr.io/openedusuite/ilias-shibboleth
+  tag: "9-php8.2-apache"
+  schedule: "0 2 * * *" # Daily at 2 AM
+
+ssoCheck:
+  enabled: false
+  schedule: "*/15 * * * *"
+
+# SAML SSO configuration (SimpleSAMLphp)
+sso:
+  saml:
+    enabled: false
+    idpMetadataUrl: https://id.opendesk.example.com/realms/opendesk/protocol/saml/descriptor
+
+  # =========================================================================
+  # MONITORING (ServiceMonitor for Prometheus)
+  # =========================================================================
+# =========================================================================
+# OPTIONAL FEATURES (disabled by default — templates read these keys directly)
+# =========================================================================
+mariadbBackup:
+  enabled: false
+  schedule: "0 2 * * *"
+  volume:
+    size: 10Gi
+networkPolicy:
+  enabled: false
+pdb:
+  minAvailable: 1

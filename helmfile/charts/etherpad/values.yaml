@@ -1,0 +1,65 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+etherpad:
+  image: etherpad/etherpad
+  tag: "2.2"
+  port: 9001
+  db:
+    host: ""
+    user: etherpad
+    password: ""
+    name: etherpad
+    port: 5432
+  volumes:
+    data:
+      size: "1Gi"
+      accessMode: "ReadWriteMany"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # =========================================================================
+  # MONITORING (ServiceMonitor for Prometheus)
+  # =========================================================================
+  monitoring:
+    enabled: false
+    interval: 30s
+    path: /health
+    port: http
+    labels:
+      release: kube-prometheus-stack
+
+replicas: 1
+
+sso:
+  oidc:
+    enabled: false
+    issuerUrl: "https://id.opendesk.example.com/realms/opendesk"
+    clientId: "opendesk-etherpad"
+    clientSecret: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+persistence:
+  storageClass: ""
+
+postgresql:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: library/postgres
+    tag: "17"
+  auth:
+    username: etherpad
+    database: etherpad
+    existingSecret: ""
+

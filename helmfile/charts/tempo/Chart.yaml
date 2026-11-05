@@ -1,0 +1,15 @@
+apiVersion: v2
+name: tempo
+description: |
+  Grafana Tempo — distributed tracing backend.
+  Stores traces received from the OpenTelemetry Collector.
+  Integrated with Grafana for trace visualization.
+type: application
+version: 0.1.0
+appVersion: "2.6.0"
+keywords:
+  - observability
+  - tracing
+  - tempo
+  - grafana
+  - distributed-tracing

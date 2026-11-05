@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Monitoring app — blackbox probes, OpenTelemetry collector, Tempo
+# Deploys the observability stack: blackbox health probes, OTel collector,
+# and Tempo tracing backend.
+---
+releases:
+  # Blackbox health probes — all ingress endpoints + alerts
+  - name: blackbox-probes
+    chart: ../../../charts/blackbox-probes
+    wait: true
+    values:
+      - "values.yaml.gotmpl"
+    installed: {{ .Values.apps.blackboxProbes.enabled | default true }}
+    timeout: 120
+
+  # OpenTelemetry Collector — distributed tracing agent + gateway
+  - name: otel-collector
+    chart: ../../../charts/opentelemetry-collector
+    wait: true
+    values:
+      - "values.yaml.gotmpl"
+    installed: {{ .Values.apps.otelCollector.enabled | default false }}
+    timeout: 300
+
+  # Tempo — distributed tracing backend (stores traces from OTel collector)
+  - name: tempo
+    chart: ../../../charts/tempo
+    wait: true
+    values:
+      - "values.yaml.gotmpl"
+    installed: {{ .Values.apps.tempo.enabled | default false }}
+    timeout: 300
+
+commonLabels:
+  deployStage: "060-monitoring"
+  component: "monitoring"

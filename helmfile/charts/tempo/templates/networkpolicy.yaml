@@ -1,0 +1,65 @@
+{{/*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+NetworkPolicy for Tempo.
+Allows ingress from the OTel collector and Grafana.
+*/}}
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "tempo.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "tempo.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "tempo.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow OTLP gRPC from OTel collector
+    - from: []
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.otlpGrpcPort }}
+    # Allow OTLP HTTP from OTel collector
+    - from: []
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.otlpHttpPort }}
+    # Allow HTTP query from Grafana and monitoring
+    - from: []
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.httpPort }}
+    # Allow gRPC from queriers
+    - from: []
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.grpcPort }}
+    # Allow metrics scraping from monitoring namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.metricsPort }}
+  egress:
+    # Allow DNS
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow Prometheus remote-write
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 9090
+{{- end }}

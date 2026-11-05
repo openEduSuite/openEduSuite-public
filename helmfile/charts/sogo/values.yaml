@@ -1,0 +1,152 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+sogo:
+  hookImage:
+    repository: registry.example.com/opendesk/kubectl
+    tag: "1.32.3"
+
+  monitoring:
+    enabled: false
+    prometheus:
+      path: /metrics
+      scrapeInterval: 30s
+      additionalLabels: {}
+      alertLabels: {}
+
+  image:
+    registry: ghcr.io
+    repository: openedusuite/sogo
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+  workers: 5
+
+  # Optional apt proxy for the Debian-package install path (e.g. a corporate
+  # egress proxy). Empty = install directly, no proxy.
+  aptProxy: ""
+
+  # OpenCloud external file storage integration
+  opencloud:
+    enabled: false
+    url: "https://files.opendesk.example.com"
+    webdavPath: "/remote.php/dav/files/{uid}/"
+
+  # Skip the OIDC sync hook (pre-install job).
+  # Set to true if the OIDC secret already exists and the hook
+  # image cannot be pulled due to network restrictions.
+  skipOidcHook: false
+
+  # External server URL for OIDC redirect_uri construction
+  # Falls back to ingress.hosts[0].host if not set
+  serverURL: "https://contacts.opendesk.example.com"
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+  timezone: "Europe/Berlin"
+  language: "English"
+  pageTile: "openDesk Mail"
+
+  # APT proxy for first-run package installation (e.g., "http://proxy.example.com:3128")
+  # Leave empty for direct internet access
+  aptProxy: ""
+
+  # Database connection (PostgreSQL)
+  db:
+    host: "postgresql"
+    port: 5432
+    user: "sogo"
+    password: ""
+    name: "sogo"
+    # Run init container to grant schema permissions on first deploy.
+    # Required because SOGo needs CREATE privilege on the public schema
+    # to create its tables (sogo_user_profile, sogo_acl, sogo_openid, etc.)
+    initSchema: true
+
+  # LDAP connection
+  ldap:
+    host: "openldap"
+    port: 389
+    baseDN: "ou=users,dc=opendesk,dc=edu"
+    bindDN: "uid=sogo,ou=services,dc=opendesk,dc=edu"
+    bindPassword: ""
+
+  # IMAP/SMTP servers
+  imap:
+    server: "imaps://dovecot:993"
+  smtp:
+    server: "smtp://postfix:587"
+  sieve:
+    server: "sieve://dovecot:4190"
+
+  mailDomain: "opendesk.example.com"
+
+  persistence:
+    enabled: true
+    size: 1Gi
+    accessMode: ReadWriteOnce
+    storageClass: ""
+
+  # OIDC/Keycloak SSO
+  oidc:
+    enabled: false
+    configUrl: "https://id.opendesk.example.com/realms/opendesk/.well-known/openid-configuration"
+    clientId: "sogo"
+    # clientSecret is NOT set here — it is managed by the pre-install hook
+    # (sync-oidc-secret-job.yaml) which creates the Keycloak client with a
+    # generated secret and stores it in the <release>-sogo-oidc Kubernetes Secret.
+    # This ensures the secret exists before the SOGo deployment starts.
+    #
+    # Pre-requisites:
+    #   - Keycloak must be deployed and accessible in the same namespace
+    #   - The admin password secret (default: ums-keycloak) must exist
+    #   - The Keycloak pod (default: ums-keycloak-0) must be running
+    #
+    # To use a pre-existing Keycloak client, provision the <release>-sogo-oidc
+    # Secret manually before Helm install:
+    #   kubectl create secret generic <release>-sogo-oidc \
+    #     --from-literal=oidc-client-secret=<your-secret>
+    scope: "openid profile email"
+
+  # Memcached
+  memcachedHost: "memcached:11211"
+
+# Values injected by parent helmfile for the keycloak pre-install hook
+global:
+  keycloak:
+    secretName: "ums-keycloak"
+    podName: "ums-keycloak-0"
+    realm: "opendesk"
+
+replicas: 1
+
+# Node selector for SOGo deployment
+# Set to the node running haproxy-ingress to avoid cross-node networking issues
+nodeSelector:
+  kubernetes.io/hostname: "vhrz2339"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: contacts.opendesk.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+  # Hook job image for OIDC sync.
+  # Uses our own minimal kubectl image for air-gapped clusters.
+  # Registry: registry.example.com/opendesk/kubectl
+  # Source: https://github.com/tobias-weiss-ai-xr/opendesk-kubectl

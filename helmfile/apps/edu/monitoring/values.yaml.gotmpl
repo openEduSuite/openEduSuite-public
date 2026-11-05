@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# Monitoring values
+# =================
+# Values for blackbox-probes, opentelemetry-collector, and tempo charts.
+
+# ---------------------------------------------------------------------------
+# Blackbox probes
+# ---------------------------------------------------------------------------
+# All probe targets are defined in the chart's values.yaml.
+# Override the blackbox exporter address if needed.
+blackboxProbes:
+  blackboxExporter:
+    address: blackbox-exporter.monitoring.svc.cluster.local:9115
+
+# ---------------------------------------------------------------------------
+# OpenTelemetry Collector
+# ---------------------------------------------------------------------------
+otelCollector:
+  mode: both
+  tempo:
+    enabled: true
+    address: tempo.openedusuite.svc.cluster.local:4317
+  monitoring:
+    serviceMonitor:
+      enabled: true
+
+# ---------------------------------------------------------------------------
+# Tempo
+# ---------------------------------------------------------------------------
+tempo:
+  storage:
+    backend: local
+    local:
+      size: 50Gi
+  monitoring:
+    serviceMonitor:
+      enabled: true
+  grafana:
+    datasource:
+      enabled: true
+      namespace: monitoring

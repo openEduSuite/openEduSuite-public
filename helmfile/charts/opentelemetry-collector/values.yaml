@@ -1,0 +1,179 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# OpenTelemetry Collector chart values
+# =====================================
+# This chart deploys an OpenTelemetry Collector that receives OTLP traces
+# from applications and exports them to Tempo (or Jaeger, or logs).
+#
+# The collector runs in two modes:
+#   1. DaemonSet (agent mode) — receives traces from pods on the same node
+#   2. Deployment (gateway mode) — receives traces from the agent and exports to backend
+#
+# Applications send traces to the agent (DaemonSet) on port 4317 (OTLP gRPC)
+# or 4318 (OTLP HTTP). The agent forwards to the gateway, which exports to Tempo.
+
+# ---------------------------------------------------------------------------
+# Image
+# ---------------------------------------------------------------------------
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: "0.110.0"
+  pullPolicy: IfNotPresent
+
+# ---------------------------------------------------------------------------
+# Deployment mode
+# ---------------------------------------------------------------------------
+# "daemonset" = agent mode (one pod per node)
+# "deployment" = gateway mode (centralized)
+# "both" = deploy both agent + gateway
+mode: both
+
+# ---------------------------------------------------------------------------
+# Tempo backend
+# ---------------------------------------------------------------------------
+# The collector exports traces to Tempo. If Tempo is not deployed,
+# traces are logged to stdout (debug mode).
+tempo:
+  enabled: true
+  # Tempo service address (deployed via the tempo chart)
+  address: tempo.openedusuite.svc.cluster.local:4317
+  # TLS
+  tls:
+    enabled: false
+
+# ---------------------------------------------------------------------------
+# Collector configuration
+# ---------------------------------------------------------------------------
+config:
+  # Receivers: accept OTLP traces from applications
+  receivers:
+    otlp:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+    # Zipkin receiver (for apps that send Zipkin format)
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+  # Processors: batch, memory limiter, resource attributes
+  processors:
+    batch:
+      timeout: 5s
+      send_batch_size: 1024
+    memory_limiter:
+      check_interval: 1s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+    resource:
+      attributes:
+        - key: deployment.environment
+          value: openedusuite
+          action: upsert
+        - key: service.namespace
+          value: openedusuite
+          action: upsert
+    # Tail-based sampling: sample 10% of traces, keep all errors
+    tail_sampling:
+      decision_wait: 10s
+      num_traces: 50000
+      expected_new_traces_per_sec: 100
+      policies:
+        - name: errors
+          type: status_code
+          status_code:
+            status_codes: [ERROR]
+        - name: slow
+          type: latency
+          latency:
+            threshold_ms: 1000
+        - name: sample
+          type: probabilistic
+          probabilistic:
+            sampling_percentage: 10
+
+  # Exporters: send to Tempo (or stdout for debug)
+  exporters:
+    # Export to Tempo via OTLP gRPC
+    otlp/tempo:
+      endpoint: tempo.openedusuite.svc.cluster.local:4317
+      tls:
+        insecure: true
+    # Debug exporter (logs traces to stdout — enable for troubleshooting)
+    debug:
+      verbosity: basic
+
+  # Service pipelines
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp, zipkin]
+        processors: [memory_limiter, resource, tail_sampling, batch]
+        exporters:
+          - otlp/tempo
+          - debug
+
+# ---------------------------------------------------------------------------
+# Service
+# ---------------------------------------------------------------------------
+service:
+  type: ClusterIP
+  # OTLP gRPC
+  otlpGrpcPort: 4317
+  # OTLP HTTP
+  otlpHttpPort: 4318
+  # Zipkin
+  zipkinPort: 9411
+  # Health check
+  healthCheckPort: 13133
+  # Metrics (for Prometheus scraping)
+  metricsPort: 8888
+
+# ---------------------------------------------------------------------------
+# Resources
+# ---------------------------------------------------------------------------
+resources:
+  agent:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  gateway:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ---------------------------------------------------------------------------
+# Monitoring
+# ---------------------------------------------------------------------------
+monitoring:
+  enabled: true
+  # ServiceMonitor for scraping the collector's own metrics
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /metrics
+    port: metrics
+    labels:
+      release: kube-prometheus-stack
+
+# ---------------------------------------------------------------------------
+# NetworkPolicy
+# ---------------------------------------------------------------------------
+networkPolicy:
+  enabled: true
+  # Allow ingress from all namespaces (apps send traces to the collector)
+  ingressFrom: []
+
+# ---------------------------------------------------------------------------
+# Node selector / tolerations
+# ---------------------------------------------------------------------------
+nodeSelector: {}
+tolerations: []
+affinity: {}

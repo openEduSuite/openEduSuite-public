@@ -1,0 +1,50 @@
+suite: deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: renders default metadata
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: sogo
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: sets pod security context
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 110
+
+  - it: sets container security context
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop[0]
+          value: ALL
+
+  - it: references OIDC secret when OIDC enabled
+    set:
+      sogo.oidc.enabled: true
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].env[?(@.name == "SOGO_OPENID_CLIENT_SECRET")]
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name == "SOGO_OPENID_CLIENT_SECRET")].valueFrom.secretKeyRef.name
+          pattern: .*-oidc
+
+  - it: has no OIDC env when OIDC disabled
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].env[?(@.name == "SOGO_OPENID_CLIENT_SECRET")]
+
+  - it: sets RollingUpdate strategy
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
