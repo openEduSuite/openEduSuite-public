@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0
 **Ihr kollaborativer Arbeitsplatz** — alle openEduSuite-Dienste an einem Ort, mit
 Single Sign-On über Ihr Hochschulkonto. **Your collaborative workspace** — all
 openEduSuite services in one place, with single sign-on via your university
-account. Based on [openDesk](https://github.com/Bundesdruckerei/opendesk).
+account.
 
 This repository is the **public openEduSuite distribution**:
 
