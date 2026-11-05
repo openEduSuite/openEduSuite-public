@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+releases:
+  - name: "ollama"
+    chart: "../../../vendor/charts/ollama"
+    version: "0.68.0"
+    values:
+      - "values.yaml.gotmpl"
+    installed: {{ .Values.apps.ollama.enabled }}
+    timeout: 900
+commonLabels:
+  deployStage: "010-infra"
+  component: "ollama"

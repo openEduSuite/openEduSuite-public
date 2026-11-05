@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+commonAnnotations:
+  {{- with .Values.annotations.excalidraw.common }}
+    { . | toYaml | nindent 2 }
+  {{- end }}
+
+excalidraw:
+  image: excalidraw/excalidraw
+  tag: latest@sha256:f7ee194addd607bf831d2af0f0a34463dd4225e426cf35199ef0b12a803398e9
+  port: 80
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  oidc:
+    enabled: {{ .Values.apps.excalidraw.oidc.enabled | default true }}
+    issuerUrl: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/opendesk"
+    clientId: "opendesk-excalidraw"
+    clientSecret: "{{ .Values.secrets.keycloak.clientSecret.excalidraw | default "" }}"
+    cookieSecret: "{{ .Values.secrets.keycloak.cookieSecret.excalidraw | default "" }}"
+
+ingress:
+  enabled: {{ .Values.ingress.enabled }}
+  className: "haproxy"
+  annotations:
+    {{- with .Values.annotations.excalidraw.ingress }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/headers: "X-Forwarded-Host excalidraw.{{ .Values.global.domain }}"
+  hosts:
+    - host: "excalidraw.{{ .Values.global.domain }}"
+      paths:
+        - path: /
+          pathType: "ImplementationSpecific"
+  tls:
+    - secretName: "opendesk-certificates-tls"
+      hosts:
+        - "excalidraw.{{ .Values.global.domain }}"
+  pdb:
+    enabled: true
+    minAvailable: 1
+  monitoring:
+    enabled: true
+
+# chart ingress templates dig top-level sso.oidc.enabled (public-variant shim)
+sso:
+  oidc:
+    enabled: {{ .Values.apps.excalidraw.oidc.enabled | default true }}

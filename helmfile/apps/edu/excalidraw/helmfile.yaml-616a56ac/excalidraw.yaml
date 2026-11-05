@@ -1,0 +1,41 @@
+commonAnnotations: null
+excalidraw:
+  image: excalidraw/excalidraw
+  oidc:
+    clientId: opendesk-excalidraw
+    clientSecret: CHANGEME
+    cookieSecret: CHANGEME
+    enabled: true
+    issuerUrl: https://id.example.org/realms/opendesk
+  port: 80
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  tag: latest@sha256:f7ee194addd607bf831d2af0f0a34463dd4225e426cf35199ef0b12a803398e9
+ingress:
+  annotations:
+    haproxy-ingress.github.io/headers: X-Forwarded-Host excalidraw.example.org
+    haproxy-ingress.github.io/ssl-redirect: "true"
+  className: haproxy
+  enabled: true
+  hosts:
+  - host: excalidraw.example.org
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+  monitoring:
+    enabled: true
+  pdb:
+    enabled: true
+    minAvailable: 1
+  tls:
+  - hosts:
+    - excalidraw.example.org
+    secretName: opendesk-certificates-tls
+sso:
+  oidc:
+    enabled: true

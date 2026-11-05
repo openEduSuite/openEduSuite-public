@@ -186,7 +186,7 @@ ilias:
       cpu: 200m
       memory: 4G
     limits:
-      cpu: 3
+      cpu: "3"
       memory: 6G
 
 iliasRPCServer:

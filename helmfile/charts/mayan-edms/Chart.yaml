@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: v2
+name: mayan-edms
+description: A Helm chart for Mayan EDMS - Free Open Source Document Management System
+type: application
+version: 1.0.0
+appVersion: "4.5.0"
+annotations:
+  artifacthub.io/changes: |
+    - Initial Mayan EDMS Helm chart for openEduSuite
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/mayan-edms/mayan-edms
+    - name: Documentation
+      url: https://docs.mayan-edms.com
+  artifacthub.io/recommendations: |
+    - url: https://github.com/paperless-ngx/paperless-ngx
+      name: Paperless-ngx (complementary document archiving)

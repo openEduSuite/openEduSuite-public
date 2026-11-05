@@ -1,0 +1,57 @@
+affinity: {}
+cluster:
+  replicas: 1
+commonAnnotations: null
+ingress:
+  annotations:
+    haproxy-ingress.github.io/headers: X-Forwarded-Host limesurvey.example.org
+    haproxy-ingress.github.io/proxy-body-size: 50m
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/timeout-client: 300ss
+    haproxy-ingress.github.io/timeout-server: 300ss
+  className: haproxy
+  enabled: true
+  hosts:
+  - host: limesurvey.example.org
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - limesurvey.example.org
+    secretName: opendesk-certificates-tls
+limesurvey:
+  db:
+    host: mariadb-standalone
+    name: limesurvey
+    password: limesurvey
+    user: limesurvey
+  image: martialblog/limesurvey
+  oidc:
+    clientId: opendesk-limesurvey
+    clientSecret: CHANGEME
+    cookieSecret: CHANGEME
+    enabled: true
+    issuerUrl: https://id.example.org/realms/opendesk
+  port: 8080
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  skipInstall: true
+  tag: latest
+  timezone: Europe/Berlin
+  volumes:
+    upload:
+      accessMode: ReadWriteMany
+      size: 1Gi
+mariadb:
+  enabled: false
+nodeSelector: {}
+sso:
+  oidc:
+    enabled: true
+tolerations: []

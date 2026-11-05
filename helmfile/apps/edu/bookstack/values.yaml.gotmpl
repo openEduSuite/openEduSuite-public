@@ -1,0 +1,120 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+commonAnnotations:
+  {{- with .Values.annotations.bookstack.common }}
+    { . | toYaml | nindent 2 }
+  {{- end }}
+
+bookstack:
+  # Image configuration - using official LinuxServer.io BookStack image
+  image: "ghcr.io/openedusuite/bookstack"
+  tag: "v26.05.2-ls276"
+
+  # Database configuration (embedded MariaDB)
+  db:
+    user: "bookstack"
+    # Password will be set via mariadb.auth.password
+    name: "bookstack"
+
+  # Volume configuration
+  volumes:
+    uploads:
+      size: "1Gi"
+      accessMode: "ReadWriteOnce"
+      storageClass: "ceph-rbd-ssd"
+
+  # Resource configuration
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # Replica count
+  replicas: {{ default 1 .Values.replicas.bookstack }}
+
+# Ingress configuration
+ingress:
+  enabled: {{ .Values.ingress.enabled }}
+  className: "haproxy"
+  annotations:
+    {{- with .Values.annotations.bookstack.ingress }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/proxy-body-size: "{{ .Values.ingress.parameters.bodySize.bookstack }}"
+    haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.bookstack }}s"
+    haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.bookstack }}s"
+    haproxy-ingress.github.io/headers: "X-Forwarded-Host wiki.{{ .Values.global.domain }}"
+  hosts:
+    - host: "wiki.{{ .Values.global.domain }}"
+      paths:
+        - path: /
+          pathType: "ImplementationSpecific"
+  tls:
+    - secretName: "opendesk-certificates-tls"
+      hosts:
+        - "wiki.{{ .Values.global.domain }}"
+
+# Persistence configuration
+persistence:
+  size: "1Gi"
+  storageClass: {{ coalesce .Values.persistence.storages.bookstack.storageClassName .Values.persistence.storageClassNames.RWO | quote }}
+
+# Service configuration
+service:
+  annotations:
+    {{- with .Values.annotations.bookstack.service }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+  externalPort: 80
+  enabled: true
+
+# Service account configuration
+serviceAccount:
+  annotations:
+    {{- with .Values.annotations.bookstack.serviceAccount }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+
+# Volume permissions
+volumePermissions:
+  enabled: true
+
+sso:
+  oidc:
+    enabled: true
+    clientId: "opendesk-bookstack"
+    clientSecret: "{{ .Values.secrets.keycloak.clientSecret.bookstack | default "" }}"
+    issuerBaseUrl: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/opendesk"
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Embedded MariaDB configuration
+mariadb:
+  enabled: true
+  auth:
+    username: "bookstack"
+    # Password will be set from bookstack-database-credentials secret
+    password: ""
+    database: "bookstack"
+  primary:
+    persistence:
+      enabled: true
+      size: "8Gi"
+      accessMode: "ReadWriteOnce"
+  pdb:
+    enabled: true
+    minAvailable: 1
+  monitoring:
+    enabled: true

@@ -1,0 +1,102 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+bookstack:
+  # --- public-variant defaults (templates deref these; upstream values omitted them) ---
+  dbConnection: mysql
+  monitoring: {}
+  image: ghcr.io/openedusuite/bookstack
+  tag: "v26.05.2-ls276"
+  port: 80
+
+  # Database configuration
+  db:
+    host: "" # Will be set by mariadb chart if left empty
+    port: 3306
+    user: bookstack
+    password: "" # Overridden by mariadb.auth.password if not empty
+    name: bookstack
+
+  # Persistence configuration
+  volumes:
+    uploads:
+      size: 1Gi
+      accessMode: ReadWriteMany
+      # storageClass: ""
+
+  # Resource configuration
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Replica count
+  replicas: 1
+  appKey: ""  # Deprecated: use appKeyExistingSecret instead
+  appKeyExistingSecret: ""  # Name of existing secret with key 'app-key'. Generate with: docker run --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:latest appkey
+  phpFpmPoolOverride:
+    enabled: false
+
+extraVolumes: []
+extraVolumeMounts: []
+
+sso:
+  oidc:
+    enabled: false
+    clientId: ""
+    clientSecret: ""
+    issuerBaseUrl: ""
+
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - host: bookstack.opendesk.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: bookstack-tls
+      hosts:
+        - bookstack.opendesk.example.com
+
+mariadb:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: library/mariadb
+    tag: "11.4"
+  auth:
+    username: bookstack
+    password: ""
+    database: bookstack
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+      accessMode: ReadWriteOnce
+      storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # =========================================================================
+  # MONITORING (ServiceMonitor for Prometheus)
+  # =========================================================================
+  monitoring:
+    enabled: false
+    interval: 30s
+    path: /health
+    port: http
+    labels:
+      release: kube-prometheus-stack
+# --- public-variant defaults (templates deref these; upstream values omitted them) ---
+networkPolicy: {}
+pdb: {}

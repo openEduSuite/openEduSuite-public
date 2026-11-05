@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+persistentVolume:
+  enabled: true
+  size: 50Gi
+ollama:
+  models:
+    - llama3.2:latest
+    - nomic-embed-text:latest
+  resources:
+    requests:
+      cpu: "1"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+service:
+  type: ClusterIP

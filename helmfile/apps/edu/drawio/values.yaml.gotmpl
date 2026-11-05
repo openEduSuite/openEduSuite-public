@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+commonAnnotations:
+  {{- with .Values.annotations.drawio.common }}
+    { . | toYaml | nindent 2 }
+  {{- end }}
+
+drawio:
+  image: jgraph/drawio
+  tag: latest@sha256:51adba39a4a13cd0cb2979916ea9ee6e4438564e76acd51f92e79fc65e728b73
+  port: 8080
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+sso:
+  oidc:
+    enabled: {{ .Values.apps.drawio.oidc.enabled | default false }}
+    issuerUrl: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/opendesk"
+    clientId: "opendesk-drawio"
+    clientSecret: "{{ .Values.secrets.keycloak.clientSecret.drawio | default "" }}"
+    cookieSecret: "{{ .Values.secrets.keycloak.cookieSecret.drawio | default "" }}"
+
+ingress:
+  enabled: {{ .Values.ingress.enabled }}
+  className: "haproxy"
+  annotations:
+    {{- with .Values.annotations.drawio.ingress }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/headers: "X-Forwarded-Host drawio.{{ .Values.global.domain }}"
+  hosts:
+    - host: "drawio.{{ .Values.global.domain }}"
+      paths:
+        - path: /
+          pathType: "ImplementationSpecific"
+  tls:
+    - secretName: "opendesk-certificates-tls"
+      hosts:
+        - "drawio.{{ .Values.global.domain }}"
+  pdb:
+    enabled: true
+    minAvailable: 1
+  monitoring:
+    enabled: true

@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+limesurvey:
+  # --- public-variant defaults (templates deref these; upstream values omitted them) ---
+  skipInstall: false
+  image: martialblog/limesurvey
+  tag: latest
+  port: 80
+  db:
+    host: ""
+    port: 3306
+    user: limesurvey
+    password: ""
+    name: limesurvey
+  tablePrefix: "lime_"
+  siteName: "LimeSurvey"
+  adminName: "admin"
+  adminEmail: "admin@opendesk.example.com"
+  timezone: Europe/Berlin
+  volumes:
+    upload:
+      size: 1Gi
+      accessMode: ReadWriteMany
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  oidc:
+    enabled: false
+    proxyImage: quay.io/oauth2-proxy/oauth2-proxy
+    proxyTag: latest
+    issuerUrl: "https://keycloak.opendesk.example.com/realms/opendesk"
+    clientId: "opendesk-limesurvey"
+    clientSecret: ""
+    cookieSecret: ""
+
+extraVolumes: []
+extraVolumeMounts: []
+
+ingress:
+  enabled: true
+  annotations: {}
+  hosts:
+    - host: limesurvey.opendesk.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: limesurvey-tls
+      hosts:
+        - limesurvey.opendesk.example.com
+
+mariadb:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: library/mariadb
+    tag: "11.4"
+  auth:
+    username: limesurvey
+    password: ""
+    rootPassword: ""
+    database: limesurvey
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+      storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+sso:
+  oidc:
+    enabled: false
+
+# --- public-variant defaults (templates deref these; upstream values omitted them) ---
+networkPolicy: {}
+pdb: {}

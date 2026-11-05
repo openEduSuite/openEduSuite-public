@@ -1,0 +1,95 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+commonAnnotations:
+  {{- with .Values.annotations.planka.common }}
+    { . | toYaml | nindent 2 }
+  {{- end }}
+
+planka:
+  image: "ghcr.io/plankanban/planka"
+  tag: "latest@sha256:19b507ae3ab5cb1855c3f6984249e4a4881ed0b912febdfd492139c29bf10f39"
+  port: 1337
+  defaultEmail: "admin@{{ .Values.global.domain }}"
+  baseUrl: "https://planka.{{ .Values.global.domain }}"
+
+  oidc:
+    clientId: {{ .Values.oidc.planka.clientId | default "opendesk-planka" | quote }}
+    authEndpoint: {{ .Values.oidc.authEndpoint | default "https://id.{{ .Values.global.domain }}/realms/opendesk/protocol/openid-connect/auth" | quote }}
+    tokenEndpoint: {{ .Values.oidc.tokenEndpoint | default "https://id.{{ .Values.global.domain }}/realms/opendesk/protocol/openid-connect/token" | quote }}
+    userinfoEndpoint: {{ .Values.oidc.userinfoEndpoint | default "https://id.{{ .Values.global.domain }}/realms/opendesk/protocol/openid-connect/userinfo" | quote }}
+    scope: "openid profile email"
+
+  # Database connection (overrides postgresql.auth.*)
+  db:
+    host: planka-postgresql
+    user: planka
+    password: plankapass123
+    name: planka
+
+  volumes:
+    data:
+      size: "1Gi"
+      accessMode: "ReadWriteMany"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+ingress:
+  enabled: {{ .Values.ingress.enabled }}
+  className: "haproxy"
+  annotations:
+    {{- with .Values.annotations.planka.ingress }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/proxy-body-size: "{{ .Values.ingress.parameters.bodySize.planka }}"
+    haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.planka }}s"
+    haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.planka }}s"
+    haproxy-ingress.github.io/headers: "X-Forwarded-Host planka.{{ .Values.global.domain }}"
+  hosts:
+    - host: "planka.{{ .Values.global.domain }}"
+      paths:
+        - path: /
+          pathType: "ImplementationSpecific"
+  tls:
+    - secretName: "opendesk-certificates-tls"
+      hosts:
+        - "planka.{{ .Values.global.domain }}"
+
+persistence:
+  size: "1Gi"
+  storageClass: {{ coalesce .Values.persistence.storages.planka.storageClassName .Values.persistence.storageClassNames.RWO | quote }}
+
+service:
+  annotations:
+    {{- with .Values.annotations.planka.service }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+  externalPort: 1337
+  enabled: true
+
+serviceAccount:
+  annotations:
+    {{- with .Values.annotations.planka.serviceAccount }}
+      { . | toYaml | nindent 4 }
+    {{- end }}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+cluster:
+  replicas: {{ default 1 .Values.replicas.planka }}
+
+# PostgreSQL is provided by the shared postgresql release
+# planka-postgresql is an ExternalName service pointing to postgresql.opendesk.svc.cluster.local
+postgresql:
+  enabled: false

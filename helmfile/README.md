@@ -8,9 +8,10 @@ they reference, with all operator-specific values replaced by placeholders.
 
 | Path | Contents |
 |---|---|
-| `apps/edu/<app>/` | Per-app helmfile + values (gotmpl) for: **ilias, sogo, opencloud, etherpad, jupyterhub, moodle, monitoring** (blackbox-probes, OTel collector, Tempo) |
+| `apps/edu/<app>/` | Per-app helmfile + values (gotmpl) for the portal-tiled apps: **ilias, sogo, opencloud, etherpad, jupyterhub, moodle, bigbluebutton, bookstack, code-server, drawio, excalidraw, limesurvey, mayan-edms, n8n, ollama, open-webui, paperless-ngx, planka, rstudio, slidev, snipr, ttyd, typo3, zammad** plus monitoring (blackbox-probes, OTel collector, Tempo). **kasmvnc** and **overleaf** are included but disabled in `environments/example.yaml`: their charts are only available as OCI artifacts (`oci://registry.kasmweb.com/kasmweb/charts/kasmvnc`, `oci://ghcr.io/sharelatex/overleaf-helm-chart/overleaf`) that are not publicly pullable, so they are not vendored — enable them only where those registries are reachable |
 | `charts/<chart>/` | Local Helm charts referenced by the apps (`sogo`, `ilias`, `moodle`, `opencloud`, `etherpad`, `blackbox-probes`, `opentelemetry-collector`, `tempo`, `common` library) |
 | `vendor/charts/jupyterhub/` | Vendored upstream [jupyterhub helm chart](https://hub.jupyter.org/helm-chart) v4.4.0 |
+| `vendor/charts/{code-server,ollama,open-webui}/` | Vendored upstream charts (see each `Chart.yaml` `opendesk/upstream-*` annotations for source repo + version) |
 | `helmfile.yaml.gotmpl` | Root helmfile — globs `apps/edu/*/helmfile.yaml.gotmpl` |
 | `helmfile-defaults.yaml.gotmpl` | Shared default values |
 | `environments/example.yaml` | **Placeholder environment** — edit this before deploying |
@@ -71,6 +72,14 @@ Fixes applied on top of sanitization (also worth porting upstream):
   references a release outside this subset — commented out.
 - `apps/edu/jupyterhub/helmfile.yaml.gotmpl`: chart path corrected to
   `../../../vendor/charts/jupyterhub`.
+- Public-variant conventions applied across the copied app/chart trees (all marked in-file):
+  - `{{- with .Values.annotations.<app>.<kind> }}` guards around empty annotation maps (`toYaml | nindent` on `{}` emits invalid YAML).
+  - `# --- public-variant defaults ... ---` blocks appended to chart `values.yaml` / `environments/example.yaml` where templates dereference keys the upstream values omitted (nil-pointer guards); scalars where the template expects scalars.
+  - `dig ... .Values` inside `range` loops corrected to `$.Values` (excalidraw, limesurvey ingress).
+  - `"Values" .Values` added to `common.deployment` dicts (drawio, excalidraw, rstudio, slidev, ttyd) so the `common` library chart can read `.Values.*`.
+  - Numeric `resources.limits.cpu` quoted where a chart schema requires string; string-form `ingress.hosts` converted to `{host, paths}` objects where the schema requires objects.
+  - Remote `dependencies:` removed from vendored `Chart.yaml`s whose subcharts are already packaged under `charts/`; broken `annotations:` indentation in vendored `Chart.yaml`s repaired.
+  - `version:` pins removed from local-path chart releases in kasmvnc/overleaf app helmfiles (invalid for `file`/local charts).
 - `vendor/charts/jupyterhub/Chart.yaml`: fixed inconsistent indentation that
   made it unparseable.
 - Empty per-resource annotation maps now render safely (`with` guards) instead

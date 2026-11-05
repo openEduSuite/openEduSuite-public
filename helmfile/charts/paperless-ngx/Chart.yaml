@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+apiVersion: v2
+name: paperless-ngx
+description: A Helm chart for Paperless-ngx - Document archiving with OCR, tags, and automated processing
+type: application
+version: 1.0.0
+appVersion: "2.12.0"
+annotations:
+  artifacthub.io/changes: |
+    - Initial Paperless-ngx Helm chart for openEduSuite
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/paperless-ngx/paperless-ngx
+    - name: Documentation
+      url: https://paperless-ngx.readthedocs.io
+  artifacthub.io/recommendations: |
+    - url: https://github.com/mayan-edms/mayan-edms
+      name: Mayan EDMS (complementary document management)

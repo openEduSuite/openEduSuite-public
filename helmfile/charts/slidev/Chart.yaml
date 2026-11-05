@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+apiVersion: v2
+name: slidev
+description: Slidev markdown slides Helm chart for openEduSuite
+type: application
+version: 0.1.0
+appVersion: "0.49.0"
+
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 0.1.0

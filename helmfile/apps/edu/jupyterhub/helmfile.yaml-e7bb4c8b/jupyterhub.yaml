@@ -1,0 +1,12 @@
+global:
+  domain: example.org
+ingress:
+  annotations:
+    haproxy-ingress.github.io/proxy-body-size: 500m
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/timeout-client: 300s
+    haproxy-ingress.github.io/timeout-server: 300s
+    kubernetes.io/ingress.class: haproxy
+  enabled: true
+  hosts:
+  - jupyter.example.org

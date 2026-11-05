@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+excalidraw:
+  # --- public-variant defaults (templates deref these; upstream values omitted them) ---
+  monitoring: {}
+  image: ghcr.io/openedusuite/excalidraw
+  tag: "latest@sha256:f7ee194addd607bf831d2af0f0a34463dd4225e426cf35199ef0b12a803398e9"
+  port: 80
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  oidc:
+    enabled: false
+    proxyImage: quay.io/oauth2-proxy/oauth2-proxy
+    proxyTag: latest
+    issuerUrl: "https://keycloak.opendesk.example.com/realms/opendesk"
+    clientId: "opendesk-excalidraw"
+    clientSecret: ""
+    cookieSecret: ""
+
+ingress:
+  enabled: true
+  className: haproxy
+  annotations: {}
+  hosts:
+    - host: excalidraw.opendesk.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: excalidraw-tls
+      hosts:
+        - excalidraw.opendesk.example.com
+
+  # =========================================================================
+  # MONITORING (ServiceMonitor for Prometheus)
+  # =========================================================================
+  monitoring:
+    enabled: false
+    interval: 30s
+    path: /health
+    port: http
+    labels:
+      release: kube-prometheus-stack
+# --- public-variant defaults (templates deref these; upstream values omitted them) ---
+networkPolicy: {}
+pdb: {}
+# --- public-variant defaults (bare map derefs; upstream values omitted them) ---
+extraEnv: []
+podSecurityContext: {}
+resources: {}

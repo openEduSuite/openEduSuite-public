@@ -1,0 +1,18 @@
+{{- if .Values.drawio.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-drawio-pdb
+  labels:
+{{ include "drawio.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.drawio.pdb.minAvailable }}
+  minAvailable: {{ .Values.drawio.pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.drawio.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "drawio.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

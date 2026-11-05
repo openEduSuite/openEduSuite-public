@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+drawio:
+  # --- public-variant defaults (templates deref these; upstream values omitted them) ---
+  monitoring: {}
+  pdb: {}
+  image: ghcr.io/openedusuite/drawio
+  tag: "latest@sha256:51adba39a4a13cd0cb2979916ea9ee6e4438564e76acd51f92e79fc65e728b73"
+  port: 8080
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+
+sso:
+  oidc:
+    enabled: false
+    proxyImage: quay.io/oauth2-proxy/oauth2-proxy
+    proxyTag: v7.6.0
+    issuerUrl: "https://id.opendesk.example.com/realms/opendesk"
+    clientId: "opendesk-drawio"
+    clientSecret: ""
+    cookieSecret: ""
+
+ingress:
+  enabled: true
+  className: haproxy
+  annotations: {}
+  hosts:
+    - host: draw.opendesk.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: drawio-tls
+      hosts:
+        - draw.opendesk.example.com
+
+  # =========================================================================
+  # MONITORING (ServiceMonitor for Prometheus)
+  # =========================================================================
+  monitoring:
+    enabled: false
+    interval: 30s
+    path: /health
+    port: http
+    labels:
+      release: kube-prometheus-stack
+# --- public-variant defaults (templates deref these; upstream values omitted them) ---
+networkPolicy: {}
+# --- public-variant defaults (bare map derefs; upstream values omitted them) ---
+extraEnv: []
+podSecurityContext: {}
+resources: {}

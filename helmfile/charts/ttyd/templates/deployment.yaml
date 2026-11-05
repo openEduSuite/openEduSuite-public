@@ -1,0 +1,15 @@
+{{- include "common.deployment" (dict
+  "name" .Release.Name
+  "image" .Values.image
+  "tag" .Values.tag
+  "port" .Values.port
+  "replicas" .Values.replicas
+  "env" .Values.extraEnv
+  "imagePullPolicy" .Values.imagePullPolicy
+  "resources" .Values.resources
+  "securityContext" .Values.securityContext
+  "podSecurityContext" .Values.podSecurityContext
+  "probes" (dict "port" .Values.port)
+  "Release" .Release
+  "Values" .Values
+) -}}

@@ -1,0 +1,10 @@
+ingress:
+  annotations:
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    kubernetes.io/ingress.class: haproxy
+  enabled: true
+  hosts:
+  - desktop.example.org
+persistence:
+  enabled: true
+  size: 10Gi

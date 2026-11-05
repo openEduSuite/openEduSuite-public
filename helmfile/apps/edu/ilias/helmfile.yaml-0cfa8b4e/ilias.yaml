@@ -1,0 +1,176 @@
+affinity: {}
+cluster:
+  replicas: 1
+commonAnnotations: null
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  enabled: true
+  privileged: false
+  runAsGroup: 33
+  runAsNonRoot: true
+  runAsUser: 33
+  seccompProfile:
+    type: RuntimeDefault
+extraEnv:
+- name: XML_CATALOG_FILES
+  value: /usr/share/xml/shibboleth/catalog.xml:/usr/share/xml/xmltooling/catalog.xml:/usr/share/xml/opensaml/saml20-catalog.xml:/usr/share/xml/opensaml/saml11-catalog.xml
+extraVolumeMounts:
+- mountPath: /etc/shibboleth
+  name: shibboleth-config
+  readOnly: true
+- mountPath: /etc/shibboleth/certs
+  name: shibboleth-certs
+  readOnly: true
+- mountPath: /etc/apache2/conf-enabled/shibboleth.conf
+  name: apache-shibboleth-config
+  readOnly: true
+  subPath: shibboleth.conf
+- mountPath: /etc/apache2/conf-enabled/backchannel.conf
+  name: apache-backchannel-config
+  readOnly: true
+  subPath: backchannel.conf
+- mountPath: /etc/apache2/conf-enabled/backchannel-env.conf
+  name: apache-backchannel-config
+  readOnly: true
+  subPath: backchannel-env.conf
+- mountPath: /var/www/html/auth/shibboleth/backchannel-handler.php
+  name: backchannel-handler
+  readOnly: true
+  subPath: backchannel-handler.php
+extraVolumes:
+- configMap:
+    name: ilias-shibboleth-config
+  name: shibboleth-config
+- name: shibboleth-certs
+  secret:
+    secretName: ilias-shibboleth-certs
+- configMap:
+    name: ilias-apache-shibboleth-config
+  name: apache-shibboleth-config
+- configMap:
+    name: ilias-apache-backchannel-config
+  name: apache-backchannel-config
+- configMap:
+    name: ilias-backchannel-handler
+  name: backchannel-handler
+ilias:
+  auth:
+    shibboleth:
+      attributeMapping:
+        email: mail
+        firstname: displayName
+        idp: idp-entity-id
+        lastname: sn
+        username: uid
+      enabled: true
+      logout:
+        enabled: "false"
+        redirectAfterLogout: https://portal.example.org
+        revokeSession: true
+  autoSetup: true
+  autoUpdate: 0
+  clientName: default
+  command:
+  - /usr/local/bin/entrypoint.sh
+  db:
+    name: ilias
+    user: ilias
+  dependencies:
+    shibboleth-sp:
+      configMap: ilias-shibboleth-config
+      enabled: true
+      metadataUrl: https://lms.example.org/Shibboleth.sso/Metadata
+  devMode: 0
+  hostName: lms.opendesk.example.com
+  image: ghcr.io/openedusuite/ilias-shibboleth
+  maxUploadSize: 200M
+  memoryLimit: 4096M
+  resources:
+    limits:
+      cpu: "3"
+      memory: 6G
+    requests:
+      cpu: 200m
+      memory: 4G
+  saml:
+    backchannelLogout:
+      enabled: "false"
+    enabled: true
+    idp:
+      entityId: https://id.example.org/realms/example
+      singleLogoutService: https://id.example.org/realms/example/protocol/saml
+      singleSignOnService: https://id.example.org/realms/example/protocol/saml
+    sp:
+      assertionConsumerService: https://lms.example.org/Shibboleth.sso/SAML2/POST
+      entityId: https://lms.example.org/shibboleth
+      singleLogoutService: https://lms.example.org/Shibboleth.sso/Logout
+  sessionLifetime: 1800
+  shibboleth:
+    backchannelLogout:
+      enabled: "false"
+      postBinding: https://lms.example.org/Shibboleth.sso/SAML2/POST/backchannel
+      redirectBinding: https://lms.example.org/Shibboleth.sso/SAML2/Redirect/backchannel
+      sessionTerminationTimeout: "300"
+      signature:
+        requireSignedRequests: "true"
+        signResponses: "true"
+      soapBinding: https://lms.example.org/Shibboleth.sso/SAML2/SOAP/backchannel
+      verbose: "false"
+    enabled: true
+  tag: 9-php8.2-apache
+  timezone: Europe/Berlin
+  volumes:
+    data:
+      accessMode: ReadWriteMany
+      size: 4Gi
+    iliasdata:
+      accessMode: ReadWriteMany
+      size: 4Gi
+ingress:
+  annotations:
+    haproxy-ingress.github.io/headers: X-Forwarded-Host lms.opendesk.example.com
+    haproxy-ingress.github.io/proxy-body-size: 100m
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/timeout-client: 300ss
+    haproxy-ingress.github.io/timeout-server: 300ss
+  className: haproxy
+  enabled: true
+  hosts:
+  - host: lms.opendesk.example.com
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - lms.opendesk.example.com
+    secretName: opendesk-certificates-tls
+mariadbgalera:
+  db:
+    name: ilias
+    user: ilias
+  enabled: true
+  persistence:
+    accessMode: ReadWriteMany
+    enabled: true
+    size: 10Gi
+  rootUser:
+    password: CHANGEME
+nodeSelector: {}
+persistence:
+  size: 4Gi
+  storageClass: null
+securityContext:
+  enabled: true
+  fsGroup: 33
+service:
+  annotations: null
+  enabled: true
+  externalPort: 80
+serviceAccount:
+  annotations: null
+tolerations: []
+volumePermissions:
+  enabled: true

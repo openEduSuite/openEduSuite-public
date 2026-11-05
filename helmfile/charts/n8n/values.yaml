@@ -1,0 +1,46 @@
+image:
+  repository: n8nio/n8n
+  tag: latest
+
+config:
+  host: n8n.opendesk.example.com
+  encryptionKey: "opendesk-n8n-key-change-me"
+  dbType: sqlite
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClass: ceph-rbd-ssd
+
+sso:
+  oidc:
+    enabled: true
+    clientId: opendesk-n8n
+    clientSecret: vp0XnZw87Baw4uZJsvuG8uyT8fAEV1ep
+    discoveryEndpoint: "https://id.opendesk.example.com/realms/opendesk/.well-known/openid-configuration"
+
+  # =========================================================================
+  # POD DISRUPTION BUDGET
+  # =========================================================================
+  pdb:
+    enabled: false
+    minAvailable: 1
+    maxUnavailable: ""
+# --- public-variant defaults (templates deref these; upstream values omitted them) ---
+n8n: {}
+networkPolicy: {}
+
+# --- public-variant defaults (templates deref these; upstream values omitted them) ---
+n8n:
+  pdb:
+    enabled: false
+    minAvailable: 1
+    maxUnavailable: 1

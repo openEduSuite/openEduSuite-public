@@ -7,25 +7,49 @@
 
 global:
   domain: example.org
+  keycloak:
+    realm: example
   hosts:
     keycloak: id
     opencloud: cloud
+    mayan: dms
+    paperless: paperless
+    typo3: www
   moodleSaml:
     entityId: "https://lms.example.org/shibboleth"
 
 platform:
   realm: example
 
+# OIDC endpoints of your identity provider (Keycloak here) — placeholders:
+oidc:
+  issuer: "https://id.example.org/realms/example"
+  authEndpoint: "https://id.example.org/realms/example/protocol/openid-connect/auth"
+  tokenEndpoint: "https://id.example.org/realms/example/protocol/openid-connect/token"
+  userinfoEndpoint: "https://id.example.org/realms/example/protocol/openid-connect/userinfo"
+  planka:
+    clientId: planka
+    clientSecret: CHANGEME
+
 ingress:
   enabled: true
   className: nginx          # your ingress controller class (e.g. nginx, haproxy, traefik)
+  ingressClassName: nginx   # used by apps whose chart expects ingressClassName
   parameters:
     bodySize:
       ilias: 100m
       etherpad: 50m
+      bookstack: 50m
+      limesurvey: 50m
+      planka: 50m
+      typo3: 100m
     bodyTimeout:
       ilias: 300s
       etherpad: 300s
+      bookstack: 300s
+      limesurvey: 300s
+      planka: 300s
+      typo3: 300s
 
 apps:
   keycloak:
@@ -64,6 +88,132 @@ apps:
     enabled: false
   tempo:
     enabled: false
+  # --- extended edu app set ---
+  bigbluebutton:
+    enabled: true
+    host: bbb.example.org
+  bookstack:
+    enabled: true
+    host: wiki.example.org
+  codeServer:
+    enabled: true
+    host: code.example.org
+  drawio:
+    enabled: true
+    host: drawio.example.org
+    oidc:
+      enabled: true
+  excalidraw:
+    enabled: true
+    host: excalidraw.example.org
+    oidc:
+      enabled: true
+  # kasmvnc chart is pulled from a public OCI registry (not vendored);
+  # enable only where that registry is reachable:
+  kasmvnc:
+    enabled: false
+    host: desktop.example.org
+  limesurvey:
+    enabled: true
+    host: survey.example.org
+    oidc:
+      enabled: true
+  mayanEdms:
+    enabled: true
+    host: dms.example.org
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPU: 80
+      targetMemory: 80
+    networkPolicies:
+      enabled: false
+    storage:
+      storageClassName: ""
+      dataSize: 10Gi
+      mediaSize: 20Gi
+      indexSize: 5Gi
+      databaseSize: 5Gi
+      redisSize: 2Gi
+  n8n:
+    enabled: true
+    host: n8n.example.org
+  ollama:
+    enabled: true
+    host: ollama.example.org
+  openWebui:
+    enabled: true
+    host: ai.example.org
+  # overleaf chart is pulled from a public OCI registry (not vendored):
+  overleaf:
+    enabled: false
+    host: latex.example.org
+  paperlessNgx:
+    enabled: true
+    host: paperless.example.org
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 3
+      targetCPU: 80
+      targetMemory: 80
+    networkPolicies:
+      enabled: false
+    storage:
+      storageClassName: ""
+      dataSize: 10Gi
+      consumeSize: 10Gi
+      databaseSize: 5Gi
+      redisSize: 2Gi
+  planka:
+    enabled: true
+    host: kanban.example.org
+    oidc:
+      enabled: false
+  rstudio:
+    enabled: true
+    host: rstudio.example.org
+    opencloud:
+      enabled: false
+      url: "https://cloud.example.org"
+      username: CHANGEME
+      password: CHANGEME
+  slidev:
+    enabled: true
+    host: slides.example.org
+  # snipr values also reference apps.seaweedfs.enabled (seaweedfs is platform
+  # storage infra, not part of this public subset) — stub it:
+  snipr:
+    enabled: true
+    host: snipr.example.org
+    lti:
+      enabled: false
+      clientId: snipr-lti
+      ilias:
+        deploymentId: "1"
+        launchUrl: "https://ilias.example.org/ilias.php"
+      moodle:
+        deploymentId: "1"
+        launchUrl: "https://moodle.example.org/mod/lti/launch.php"
+    sso:
+      enabled: false
+      clientId: snipr-sso
+    transcription:
+      enabled: false
+  seaweedfs:
+    enabled: false
+  ttyd:
+    enabled: true
+    host: shell.example.org
+  typo3:
+    enabled: true
+    host: www.example.org
+    oidc:
+      enabled: false
+  zammad:
+    enabled: true
+    host: helpdesk.example.org
 
 databases:
   sogo:
@@ -88,6 +238,34 @@ secrets:
       sogo: CHANGEME
       opencloud: CHANGEME
       etherpad: CHANGEME
+      bookstack: CHANGEME
+      drawio: CHANGEME
+      excalidraw: CHANGEME
+      limesurvey: CHANGEME
+      typo3: CHANGEME
+    cookieSecret:
+      drawio: CHANGEME
+      excalidraw: CHANGEME
+      limesurvey: CHANGEME
+  mayan:
+    secretKey: CHANGEME
+    databasePassword: CHANGEME
+    postgresPassword: CHANGEME
+    redisPassword: CHANGEME
+    oidcClientSecret: CHANGEME
+  n8n:
+    encryptionKey: CHANGEME
+  paperless:
+    secretKey: CHANGEME
+    adminUsername: admin
+    adminPassword: CHANGEME
+    databasePassword: CHANGEME
+    postgresPassword: CHANGEME
+    redisPassword: CHANGEME
+    oidcClientSecret: CHANGEME
+  typo3:
+    installToolPassword: CHANGEME
+    databasePassword: CHANGEME
   opencloud:
     jwtSecret: CHANGEME
     transferSecret: CHANGEME
@@ -115,13 +293,53 @@ persistence:
       storageClassName: ""
     etherpad:
       storageClassName: ""
+    bookstack:
+      storageClassName: ""
+    n8n:
+      storageClassName: ""
+    planka:
+      storageClassName: ""
+    zammad:
+      storageClassName: ""
+  typo3:
+    fileadmin:
+      storageClassName: ""
+      size: 5Gi
+    var:
+      storageClassName: ""
+      size: 5Gi
 
 replicas:
   ilias: 1
   etherpad: 1
+  bookstack: 1
+  limesurvey: 1
+  planka: 1
+  typo3: 1
+  zammad: 1
 
 resources:
   opencloud: {}
+  mayan: {}
+  mayanPostgresql: {}
+  mayanRedis: {}
+  paperless: {}
+  paperlessPostgresql: {}
+  paperlessRedis: {}
+  snipr:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  typo3:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
 
 annotations:
   ilias:
@@ -142,6 +360,142 @@ annotations:
   opencloud:
     pod: {}
     serviceAccount: {}
+  bookstack:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  drawio:
+    common: {}
+    ingress: {}
+  excalidraw:
+    common: {}
+    ingress: {}
+  limesurvey:
+    common: {}
+    ingress: {}
+  mayan:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  paperless:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  planka:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  zammad:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+  typo3:
+    common: {}
+    ingress: {}
+    service: {}
+    serviceAccount: {}
+
+autoscaling:
+  snipr:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+
+backup:
+  mayan:
+    enabled: false
+    schedule: "0 2 * * *"
+    retention:
+      daily: 7
+      weekly: 4
+      monthly: 3
+  paperless:
+    enabled: false
+    schedule: "0 3 * * *"
+    retention:
+      daily: 7
+      weekly: 4
+      monthly: 3
+  snipr:
+    enabled: false
+    schedule: "0 4 * * *"
+    retention:
+      daily: 7
+      weekly: 4
+      monthly: 3
+
+database:
+  typo3:
+    name: typo3
+
+# embedded MariaDB used by the typo3 chart (bitnami-style block):
+mariadb:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: library/mariadb
+    tag: "11.4"
+  auth:
+    database: typo3
+    username: typo3
+    password: CHANGEME
+    rootPassword: CHANGEME
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 5Gi
+
+images:
+  mayan:
+    repository: ghcr.io/openedusuite/mayan-edms
+    tag: latest
+    pullPolicy: IfNotPresent
+  paperless:
+    repository: ghcr.io/paperless-ngx/paperless-ngx
+    tag: latest
+    pullPolicy: IfNotPresent
+  typo3:
+    repository: ghcr.io/openedusuite/typo3
+    tag: latest
+    dbRegistry: docker.io
+
+services:
+  snipr:
+    enabled: true
+    host: snipr.example.org
+    lti:
+      enabled: false
+      clientId: snipr-lti
+      ilias:
+        deploymentId: "1"
+        launchUrl: "https://ilias.example.org/ilias.php"
+      moodle:
+        deploymentId: "1"
+        launchUrl: "https://moodle.example.org/mod/lti/launch.php"
+    sso:
+      enabled: false
+      clientId: snipr-sso
+    transcription:
+      enabled: false
+  seaweedfs:
+    endpoint: "http://seaweedfs:8333"
+    bucket: openedusuite
+  f13:
+    endpoint: "http://f13:8000"
+    model: placeholder
+    language: de
+
+storageclasses:
+  cephfs: ""
+  cephRbdSsd: ""
 
 backchannelLogout:
   enabled: false
@@ -170,13 +524,26 @@ backchannelLogout:
 charts:
   jupyterhub:
     version: "4.4.0"         # matches vendor/charts/jupyterhub/Chart.yaml
+  codeServer:
+    version: "0.0.0"         # informational; chart is vendored under vendor/charts/
 
 # Extra per-release values files (helmfile `values:` entries), per app
 customization:
   release:
-    sogo: []
-    ilias: []
+    bigbluebutton: []
+    bookstack: []
+    drawio: []
     etherpad: []
+    excalidraw: []
+    ilias: []
+    limesurvey: []
+    mayanEdms: []
+    paperlessNgx: []
+    planka: []
+    snipr: []
+    sogo: []
+    typo3: []
+    zammad: []
 
 ilias:
   command: []

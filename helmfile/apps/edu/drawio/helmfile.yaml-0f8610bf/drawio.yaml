@@ -1,0 +1,39 @@
+commonAnnotations: null
+drawio:
+  image: jgraph/drawio
+  port: 8080
+  resources:
+    limits:
+      cpu: "1"
+      memory: 2Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+  tag: latest@sha256:51adba39a4a13cd0cb2979916ea9ee6e4438564e76acd51f92e79fc65e728b73
+ingress:
+  annotations:
+    haproxy-ingress.github.io/headers: X-Forwarded-Host drawio.example.org
+    haproxy-ingress.github.io/ssl-redirect: "true"
+  className: haproxy
+  enabled: true
+  hosts:
+  - host: drawio.example.org
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+  monitoring:
+    enabled: true
+  pdb:
+    enabled: true
+    minAvailable: 1
+  tls:
+  - hosts:
+    - drawio.example.org
+    secretName: opendesk-certificates-tls
+sso:
+  oidc:
+    clientId: opendesk-drawio
+    clientSecret: CHANGEME
+    cookieSecret: CHANGEME
+    enabled: true
+    issuerUrl: https://id.example.org/realms/opendesk

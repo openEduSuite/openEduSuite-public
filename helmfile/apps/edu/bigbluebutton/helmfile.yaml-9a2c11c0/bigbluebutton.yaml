@@ -1,0 +1,65 @@
+bigbluebutton:
+  greenlight:
+    default_registration: saml
+    saml:
+      idp_entityId: https://id.opendesk.example.com/realms/opendesk
+      idp_sso_target_url: https://id.opendesk.example.com/realms/opendesk/protocol/saml
+      sp_entityId: https://bbb.opendesk.example.com/shibboleth
+  image: ghcr.io/<your-org>/greenlight-saml
+  replicaCount: 2
+  tag: v1.3.0
+boldchat:
+  enabled: true
+  icon: //img.icons8.com/color/96/lock.png
+  label: OpenDesk Login
+  params:
+    allowed_clock_drift: 120
+    assertion_consumer_service_url: https://bbb.opendesk.example.com/auth/saml2/callback
+    idp_entity_id: https://id.opendesk.example.com/realms/opendesk
+    idp_metadata_url: https://id.opendesk.example.com/realms/opendesk/protocol/saml/descriptor
+    idp_slo_target_url: https://id.opendesk.example.com/realms/opendesk/protocol/saml
+    idp_sso_target_url: https://id.opendesk.example.com/realms/opendesk/protocol/saml
+    sp_entity_id: https://bbb.opendesk.example.com/shibboleth
+  provider: :saml
+  recordings:
+    allow_guests: false
+    require_login: false
+  secrets:
+    certificate: /etc/shibboleth/shib-cert.pem
+    private_key: /etc/shibboleth/shib-key.pem
+commonAnnotations: {}
+extraVolumeMounts:
+- mountPath: /home/app/greenlight/app/controllers/saml_backchannel_controller.rb
+  name: bbb-saml-backchannel-controller
+  readOnly: true
+  subPath: saml_backchannel_controller.rb
+extraVolumes:
+- configMap:
+    name: bbb-saml-backchannel-controller
+  name: bbb-saml-backchannel-controller
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/timeout-client: 120000ms
+    haproxy-ingress.github.io/timeout-server: 120000ms
+  className: haproxy
+  enabled: true
+  hosts:
+    host: bbb.opendesk.example.com
+    paths:
+      path: /
+      pathType: ImplementationSpecific
+  tls:
+    hosts:
+    - bbb.opendesk.example.com
+    secretName: opendesk-certificates-tls
+service:
+  annotations: {}
+  enabled: true
+  externalPort: 80
+shibboleth:
+  enabled: true
+  sp:
+    entityID: https://bbb.opendesk.example.com/shibboleth
+    host: bbb.opendesk.example.com

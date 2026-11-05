@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: Apache-2.0
+---
+releases:
+  - name: "code-server"
+    chart: "../../../vendor/charts/code-server"
+    version: "{{ .Values.charts.codeServer.version }}"
+    values:
+      - "values.yaml.gotmpl"
+    installed: {{ .Values.apps.codeServer.enabled }}
+    timeout: 600
+commonLabels:
+  deployStage: "050-components"
+  component: "code-server"

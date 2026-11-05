@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+apiVersion: v2
+name: rstudio
+description: RStudio Server Helm chart for openEduSuite
+type: application
+version: 0.1.0
+appVersion: "4.4.2"
+
+dependencies:
+  - name: common
+    repository: file://../common
+    version: 0.1.0

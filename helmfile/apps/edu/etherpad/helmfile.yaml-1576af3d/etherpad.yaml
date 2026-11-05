@@ -1,0 +1,81 @@
+affinity: {}
+cluster:
+  replicas: 1
+commonAnnotations: null
+containerSecurityContext:
+  enabled: true
+  runAsGroup: 0
+  runAsUser: 0
+etherpad:
+  db:
+    name: etherpad
+    user: etherpad
+  image: etherpad/etherpad
+  port: 9001
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  tag: 1.9.9
+  volumes:
+    data:
+      accessMode: ReadWriteOnce
+      size: 1Gi
+      storageClass: null
+ingress:
+  annotations:
+    haproxy-ingress.github.io/headers: X-Forwarded-Host etherpad.example.org
+    haproxy-ingress.github.io/proxy-body-size: 50m
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    haproxy-ingress.github.io/timeout-client: 300ss
+    haproxy-ingress.github.io/timeout-server: 300ss
+  className: haproxy
+  enabled: true
+  hosts:
+  - host: etherpad.example.org
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - etherpad.example.org
+    secretName: opendesk-certificates-tls
+nodeSelector: {}
+persistence:
+  size: 1Gi
+  storageClass: null
+postgresql:
+  auth:
+    database: etherpad
+    existingSecret: ""
+    username: etherpad
+  enabled: true
+  image:
+    registry: docker.io
+    repository: library/postgres
+    tag: "17"
+  primary:
+    persistence:
+      accessMode: ReadWriteOnce
+      enabled: true
+      size: 8Gi
+securityContext:
+  enabled: true
+  runAsGroup: 0
+  runAsUser: 0
+service:
+  annotations: null
+  enabled: true
+  externalPort: 9001
+serviceAccount:
+  annotations: null
+sso:
+  oidc:
+    clientId: opendesk-etherpad
+    clientSecret: CHANGEME
+    enabled: true
+    issuerUrl: https://id.example.org/realms/opendesk
+tolerations: []

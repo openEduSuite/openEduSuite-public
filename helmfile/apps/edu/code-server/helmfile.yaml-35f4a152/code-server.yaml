@@ -1,0 +1,10 @@
+coder:
+  image:
+    tag: 4.96.2
+ingress:
+  annotations:
+    haproxy-ingress.github.io/ssl-redirect: "true"
+    kubernetes.io/ingress.class: haproxy
+  enabled: true
+  hosts:
+  - code.example.org
