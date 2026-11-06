@@ -1,3 +1,4 @@
+# --- public-variant (sync-keep): intentional local fix; not overwritten by sync-public.sh push ---
 annotations:
   opendesk/upstream-chart: "ollama/ollama"
   opendesk/upstream-repo: "https://ollama.github.io/helm-chart"

@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2026 openEduSuite Contributors
 # SPDX-License-Identifier: Apache-2.0
+# --- public-variant (sync-keep): intentional local fix; not overwritten by sync-public.sh push ---
 ---
 commonAnnotations:
   {{- with .Values.annotations.etherpad.common }}{{ toYaml . | nindent 2 }}{{- end }}

@@ -1,3 +1,4 @@
+# --- public-variant (sync-keep): intentional local fix; not overwritten by sync-public.sh push ---
 Thank you for installing {{ .Chart.Name }}!
 
 Your release is named {{ .Release.Name }}.
