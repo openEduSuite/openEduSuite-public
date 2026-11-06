@@ -1,0 +1,125 @@
+/**
+ * SPDX-License-Identifier: AGPL-3.0-only
+ * SPDX-FileCopyrightText: 2024-2025 Univention GmbH
+ * SPDX-FileCopyrightText: 2026 openEDU Team
+ *
+ * openEDU fork — extended with OpenCloud, SOGo, and ILIAS support.
+ */
+
+const issuerBaseUrl =
+  process.env.ISSUER_BASE_URL ??
+  `${process.env.KEYCLOAK_URL}/auth/realms/${process.env.REALM_NAME}`;
+
+const config = {
+  corsOptions: {
+    methods: "GET,POST,PUT,DELETE,PROPFIND,MKCOL",
+    credentials: true,
+    exposedHeaders: [
+      "etag",
+      "dav",
+      "Content-Security-Policy",
+      "Location",
+      "Authorization",
+      "depth",
+      "content-type",
+      "ocs-apirequest",
+    ],
+    origin: new RegExp(process.env.ORIGIN_REGEX),
+  },
+  issuerBaseUrl,
+  logLevel: `${process.env.LOG_LEVEL}`.toLowerCase() ?? "info",
+  enableSessionCookie: JSON.parse(
+    (process.env.ENABLE_SESSION_COOKIE ?? "false").toLowerCase(),
+  ),
+  sessionRollingDuration: JSON.parse(
+    process.env.SESSION_ROLLING_DURATION ?? 86400,
+  ),
+  userUniqueMapper: process.env.USER_UNIQUE_MAPPER ?? "entryuuid",
+  usernameClaim: process.env.USERNAME_CLAIM ?? "opendesk_username",
+  nordeck: {
+    url: process.env.NORDECK_URL,
+  },
+  portal: {
+    url: process.env.PORTAL_URL,
+    secret: process.env.PORTAL_API_KEY,
+  },
+  xwiki: {
+    enabled: JSON.parse((process.env.XWIKI_ENABLED ?? "false").toLowerCase()),
+    name: "XWiki",
+    url: process.env.XWIKI_URL,
+    audience: process.env.XWIKI_AUDIENCE,
+    session_storage_key: "xwiki_access_token",
+  },
+  // Nextcloud (upstream compatibility — kept for legacy setups)
+  nextcloud: {
+    enabled: JSON.parse((process.env.NC_ENABLED ?? "false").toLowerCase()),
+    name: "Nextcloud",
+    url: process.env.NC_URL,
+    audience: process.env.NC_AUDIENCE,
+    session_storage_key: "nc_access_token",
+  },
+  // Generic cloud storage (WebDAV) — backend switchable between OpenCloud and Nextcloud
+  cloud: {
+    enabled: JSON.parse((process.env.CLOUD_ENABLED ?? "false").toLowerCase()),
+    name: "Cloud",
+    url: process.env.CLOUD_URL,
+    audience: process.env.CLOUD_AUDIENCE ?? "openedusuite-opencloud",
+    backend: process.env.CLOUD_BACKEND ?? "opencloud",
+    session_storage_key: "cloud_access_token",
+  },
+  // OpenCloud (openEDU primary file service)
+  opencloud: {
+    enabled: JSON.parse((process.env.OC_ENABLED ?? "false").toLowerCase()),
+    name: "OpenCloud",
+    url: process.env.OC_URL,
+    audience: process.env.OC_AUDIENCE ?? "opendesk-opencloud",
+    session_storage_key: "oc_access_token",
+  },
+  // SOGo Groupware (CalDAV, CardDAV, mail)
+  sogo: {
+    enabled: JSON.parse((process.env.SOGO_ENABLED ?? "false").toLowerCase()),
+    name: "SOGo",
+    url: process.env.SOGO_URL,
+    audience: process.env.SOGO_AUDIENCE ?? "opendesk-sogo",
+    session_storage_key: "sogo_access_token",
+  },
+  // ILIAS Learning Management System (Phase 2)
+  ilias: {
+    enabled: JSON.parse((process.env.ILIAS_ENABLED ?? "false").toLowerCase()),
+    name: "ILIAS",
+    url: process.env.ILIAS_URL,
+    audience: process.env.ILIAS_AUDIENCE ?? "opendesk-ilias",
+    session_storage_key: "ilias_access_token",
+    // B1 SSO bridge: ID-token claim holding the ILIAS login name (email).
+    remote_user_claim: process.env.ILIAS_REMOTE_USER_CLAIM ?? "email",
+    // Shared secret sent as X-OpenDesk-Proxy-Secret; ILIAS Apache only
+    // trusts X-Remote-User when this matches (anti-spoof). Set via env
+    // ILIAS_PROXY_SECRET; empty means the secret header is not sent.
+    proxy_secret: process.env.ILIAS_PROXY_SECRET ?? "",
+  },
+  intercom: {
+    clientId: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    proxy: JSON.parse((process.env.PROXY ?? "false").toLowerCase()),
+    secret: process.env.SECRET,
+    baseUrl: process.env.BASE_URL,
+  },
+  matrix: {
+    enabled: JSON.parse((process.env.MATRIX_ENABLED ?? "false").toLowerCase()),
+    name: "Matrix",
+    url: process.env.MATRIX_URL,
+    appServiceSecret: process.env.MATRIX_AS_SECRET,
+    session_storage_key: "matrix_access_token",
+  },
+  redis: {
+    user: process.env.REDIS_USER ?? "default",
+    password: process.env.REDIS_PASSWORD,
+    host: process.env.REDIS_HOST ?? "redis-intercom",
+    port: process.env.REDIS_PORT ?? 6379,
+    caPath: process.env.NODE_EXTRA_CA_CERTS ?? "...",
+    mTLS: JSON.parse((process.env.REDIS_MTLS ?? "false").toLowerCase()),
+    SSL: JSON.parse((process.env.REDIS_SSL ?? "false").toLowerCase()),
+  },
+};
+
+module.exports = config;

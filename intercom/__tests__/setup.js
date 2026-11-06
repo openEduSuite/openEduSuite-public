@@ -1,0 +1,10 @@
+const path = require('path');
+process.env.NODE_ENV = 'test';
+process.env.ISSUER_BASE_URL = process.env.ISSUER_BASE_URL || 'http://keycloak.test:8080/auth/realms/test';
+process.env.BASE_URL = process.env.BASE_URL || 'http://ics.test:8080';
+process.env.CLIENT_ID = process.env.CLIENT_ID || 'test-client';
+process.env.CLIENT_SECRET = process.env.CLIENT_SECRET || 'test-secret';
+process.env.SECRET = process.env.SECRET || 'test-secret-32-chars-minimum!!!!!';
+process.env.ORIGIN_REGEX = process.env.ORIGIN_REGEX || '.*';
+process.env.LOG_LEVEL = process.env.LOG_LEVEL || 'silent';
+process.env.ENABLE_SESSION_COOKIE = process.env.ENABLE_SESSION_COOKIE || 'true';
