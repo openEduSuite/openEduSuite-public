@@ -82,4 +82,3 @@ export function getConfig(): PortalConfig {
 
 /** Config used when /config.json is absent (also exported for tests/spec). */
 export { DEFAULT_CONFIG };
-// e2e-sync-test-marker-1793953261
