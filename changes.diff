@@ -1,0 +1,4 @@
+Nur in /tmp/pubsync.tD2225: changes.diff.
+diff -r '--exclude=.git' '--exclude=node_modules' /home/weissto_local/git/openEduSuite-hrz/../openEduSuite-meta/openEduSuite-public/src/config.ts /tmp/pubsync.tD2225/src/config.ts
+84a85
+> // e2e-sync-test-marker-1793953261
