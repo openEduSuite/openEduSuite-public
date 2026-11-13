@@ -11,6 +11,12 @@ const { massageCors } = require("./cors");
 const { JWKS } = require("./keys");
 const { redisClient, redisStore } = require("./redis");
 const { logger } = require("./logger");
+const {
+  metricsMiddleware,
+  metricsHandler,
+  setRedisConnected,
+  incrementProxyRequest,
+} = require("./metrics");
 
 module.exports = {
   verifyJWT,
@@ -22,4 +28,8 @@ module.exports = {
   redisClient,
   redisStore,
   logger,
+  metricsMiddleware,
+  metricsHandler,
+  setRedisConnected,
+  incrementProxyRequest,
 };

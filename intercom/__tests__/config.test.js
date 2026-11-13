@@ -40,10 +40,10 @@ describe('config', () => {
       expect(opencloud.enabled).toBe(false);
     });
 
-    test('opencloud.audience defaults to opendesk-opencloud', () => {
+    test('opencloud.audience defaults to openedusuite-opencloud', () => {
       process.env.ORIGIN_REGEX = '.*';
       const { opencloud } = require('../config');
-      expect(opencloud.audience).toBe('opendesk-opencloud');
+      expect(opencloud.audience).toBe('openedusuite-opencloud');
     });
 
     test('opencloud.url is undefined when not set', () => {
@@ -58,10 +58,10 @@ describe('config', () => {
       expect(sogo.enabled).toBe(false);
     });
 
-    test('sogo.audience defaults to opendesk-sogo', () => {
+    test('sogo.audience defaults to openedusuite-sogo', () => {
       process.env.ORIGIN_REGEX = '.*';
       const { sogo } = require('../config');
-      expect(sogo.audience).toBe('opendesk-sogo');
+      expect(sogo.audience).toBe('openedusuite-sogo');
     });
 
     test('ilias defaults to disabled when ILIAS_ENABLED is not set', () => {
@@ -70,10 +70,10 @@ describe('config', () => {
       expect(ilias.enabled).toBe(false);
     });
 
-    test('ilias.audience defaults to opendesk-ilias', () => {
+    test('ilias.audience defaults to openedusuite-ilias', () => {
       process.env.ORIGIN_REGEX = '.*';
       const { ilias } = require('../config');
-      expect(ilias.audience).toBe('opendesk-ilias');
+      expect(ilias.audience).toBe('openedusuite-ilias');
     });
 
     test('xwiki defaults to disabled when XWIKI_ENABLED is not set', () => {

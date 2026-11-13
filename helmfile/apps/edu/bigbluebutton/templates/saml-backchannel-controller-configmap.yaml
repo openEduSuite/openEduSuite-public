@@ -9,7 +9,7 @@ metadata:
   labels:
     app.kubernetes.io/name: bigbluebutton
     app.kubernetes.io/component: backchannel-logout
-    app.kubernetes.io/part-of: opendesk
+    app.kubernetes.io/part-of: openedusuite
 data:
   saml_backchannel_controller.rb: |
 {{ .Files.Get "controllers/saml_backchannel_controller.rb" | indent 4 }}

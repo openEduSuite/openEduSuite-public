@@ -38,14 +38,14 @@ ingress:
     haproxy-ingress.github.io/timeout-server: "600s"
     haproxy-ingress.github.io/timeout-client: "600s"
   hosts:
-    - host: opencloud.opendesk.example.com
+    - host: opencloud.openedusuite.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: openedusuite-wildcard-tls
       hosts:
-        - opencloud.opendesk.example.com
+        - opencloud.openedusuite.example.com
 
 persistence:
   enabled: true
@@ -55,9 +55,9 @@ persistence:
   annotations: {}
 
 oidc:
-  issuer: https://id.opendesk.example.com/realms/opendesk
+  issuer: https://id.openedusuite.example.com/realms/openedusuite
   internalIssuer: ""
-  clientId: opendesk-opencloud
+  clientId: openedusuite-opencloud
   clientSecret: ""
   autoProvisionAccounts: "true"
   roleAssignmentDriver: "oidc"
@@ -70,7 +70,7 @@ oidc:
   assignDefaultUserRole: "false"
   usernameMatch: "none"
   excludeRunServices: "idp,idm,auth-basic"
-  accountEditLink: https://id.opendesk.example.com/realms/opendesk/account
+  accountEditLink: https://id.openedusuite.example.com/realms/openedusuite/account
 
 logLevel: info
 
@@ -96,7 +96,7 @@ graph:
   ldap:
     # Set enabled: true to use an external LDAP server as identity backend
     enabled: false
-    uri: "ldap://ldap.opendesk.svc.cluster.local:389"
+    uri: "ldap://ldap.openedusuite.svc.cluster.local:389"
     bind_dn: "cn=admin,dc=example,dc=org"
     bind_password: ""
     base_dn: "dc=example,dc=org"
@@ -151,6 +151,6 @@ notifications:
   smtp:
     host: ""
     port: 587
-    sender: "noreply@opendesk.example.com"
+    sender: "noreply@example.org"
     username: ""
     # password is set via secrets

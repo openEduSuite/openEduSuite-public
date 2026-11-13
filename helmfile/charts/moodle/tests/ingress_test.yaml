@@ -32,4 +32,4 @@ tests:
     asserts:
       - equal:
           path: spec.rules[0].host
-          value: "moodle.opendesk.example.com"
+          value: "moodle.openedusuite.example.com"

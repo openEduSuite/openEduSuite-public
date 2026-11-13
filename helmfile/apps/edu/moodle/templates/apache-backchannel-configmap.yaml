@@ -9,7 +9,7 @@ metadata:
   labels:
     app.kubernetes.io/name: moodle
     app.kubernetes.io/component: backchannel-logout
-    app.kubernetes.io/part-of: opendesk
+    app.kubernetes.io/part-of: openedusuite
 data:
   backchannel.conf: |
     {{ if and .Values.backchannelLogout.enabled .Values.backchannelLogout.saml.moodle.enabled }}

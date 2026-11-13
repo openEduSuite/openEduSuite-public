@@ -12,7 +12,7 @@ ilias:
 
     # Backchannel logout configuration
     backchannelLogout:
-      enabled: {{ .Values.backchannelLogout.saml.ilias.enabled | default "false" | quote }}
+      enabled: {{ dig "backchannelLogout" "saml" "ilias" "enabled" "false" .Values | quote }}
 
     # SAML SP (Service Provider) configuration
     sp:
@@ -32,27 +32,27 @@ ilias:
 
     # Backchannel logout settings
     backchannelLogout:
-      enabled: {{ .Values.backchannelLogout.saml.ilias.enabled | default "false" | quote }}
+      enabled: {{ dig "backchannelLogout" "saml" "ilias" "enabled" "false" .Values | quote }}
 
       # SOAP binding (backchannel)
-      soapBinding: {{ .Values.backchannelLogout.saml.ilias.bindings.soap | default "true" | quote }}
+      soapBinding: {{ dig "backchannelLogout" "saml" "ilias" "bindings" "soap" "true" .Values | quote }}
 
       # HTTP-Redirect binding (frontchannel)
-      redirectBinding: {{ .Values.backchannelLogout.saml.ilias.bindings.httpRedirect | default "true" | quote }}
+      redirectBinding: {{ dig "backchannelLogout" "saml" "ilias" "bindings" "httpRedirect" "true" .Values | quote }}
 
       # HTTP-POST binding (frontchannel)
-      postBinding: {{ .Values.backchannelLogout.saml.ilias.bindings.httpPost | default "true" | quote }}
+      postBinding: {{ dig "backchannelLogout" "saml" "ilias" "bindings" "httpPost" "true" .Values | quote }}
 
       # Signature requirements
       signature:
-        requireSignedRequests: {{ .Values.backchannelLogout.saml.ilias.signature.requireSignedRequests | default "true" | quote }}
-        signResponses: {{ .Values.backchannelLogout.saml.ilias.signature.signResponses | default "true" | quote }}
+        requireSignedRequests: {{ dig "backchannelLogout" "saml" "ilias" "signature" "requireSignedRequests" "true" .Values | quote }}
+        signResponses: {{ dig "backchannelLogout" "saml" "ilias" "signature" "signResponses" "true" .Values | quote }}
 
       # Session termination timeout
-      sessionTerminationTimeout: {{ .Values.backchannelLogout.saml.ilias.sessionTerminationTimeout | default "30" | quote }}
+      sessionTerminationTimeout: {{ dig "backchannelLogout" "saml" "ilias" "sessionTerminationTimeout" "30" .Values | quote }}
 
       # Verbose logging
-      verbose: {{ .Values.backchannelLogout.saml.ilias.verbose | default "false" | quote }}
+      verbose: {{ dig "backchannelLogout" "saml" "ilias" "verbose" "false" .Values | quote }}
 
   # ILIAS authentication plugin configuration
   auth:
@@ -69,7 +69,7 @@ ilias:
 
       # Backchannel logout behavior
       logout:
-        enabled: {{ .Values.backchannelLogout.saml.ilias.enabled | default "false" | quote }}
+        enabled: {{ dig "backchannelLogout" "saml" "ilias" "enabled" "false" .Values | quote }}
         revokeSession: true
         redirectAfterLogout: "https://portal.{{ .Values.global.domain }}"
 

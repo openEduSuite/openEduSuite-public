@@ -35,7 +35,7 @@ const config = {
     process.env.SESSION_ROLLING_DURATION ?? 86400,
   ),
   userUniqueMapper: process.env.USER_UNIQUE_MAPPER ?? "entryuuid",
-  usernameClaim: process.env.USERNAME_CLAIM ?? "opendesk_username",
+  usernameClaim: process.env.USERNAME_CLAIM ?? "openedusuite_username",
   nordeck: {
     url: process.env.NORDECK_URL,
   },
@@ -72,7 +72,7 @@ const config = {
     enabled: JSON.parse((process.env.OC_ENABLED ?? "false").toLowerCase()),
     name: "OpenCloud",
     url: process.env.OC_URL,
-    audience: process.env.OC_AUDIENCE ?? "opendesk-opencloud",
+    audience: process.env.OC_AUDIENCE ?? "openedusuite-opencloud",
     session_storage_key: "oc_access_token",
   },
   // SOGo Groupware (CalDAV, CardDAV, mail)
@@ -80,7 +80,7 @@ const config = {
     enabled: JSON.parse((process.env.SOGO_ENABLED ?? "false").toLowerCase()),
     name: "SOGo",
     url: process.env.SOGO_URL,
-    audience: process.env.SOGO_AUDIENCE ?? "opendesk-sogo",
+    audience: process.env.SOGO_AUDIENCE ?? "openedusuite-sogo",
     session_storage_key: "sogo_access_token",
   },
   // ILIAS Learning Management System (Phase 2)
@@ -88,7 +88,7 @@ const config = {
     enabled: JSON.parse((process.env.ILIAS_ENABLED ?? "false").toLowerCase()),
     name: "ILIAS",
     url: process.env.ILIAS_URL,
-    audience: process.env.ILIAS_AUDIENCE ?? "opendesk-ilias",
+    audience: process.env.ILIAS_AUDIENCE ?? "openedusuite-ilias",
     session_storage_key: "ilias_access_token",
     // B1 SSO bridge: ID-token claim holding the ILIAS login name (email).
     remote_user_claim: process.env.ILIAS_REMOTE_USER_CLAIM ?? "email",

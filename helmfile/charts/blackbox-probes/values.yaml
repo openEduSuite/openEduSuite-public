@@ -31,6 +31,12 @@ probes:
   # --- HTTP probes (http_alive module) ---
   # All public ingress endpoints. Accepts 200/302/401/403 (redirects, auth gates).
   http:
+    # Externe Universitaets-Tiles (Portal-Katalog, kein Keycloak-SSO — nur Erreichbarkeit)
+    - { name: ext-marvin,             url: "https://marvin.example.com/",                          severity: warning, category: external }
+    - { name: ext-ilias,              url: "https://ilias.example.com/",                           severity: warning, category: external }
+    - { name: ext-hessenbox,          url: "https://next.hessenbox.de/",                              severity: warning, category: external }
+    - { name: ext-personenverzeichnis, url: "https://www.example.com/de/hrz/dienste/personenverzeichnis", severity: warning, category: external }
+    - { name: ext-webconf-bbb,        url: "https://webconf.example.com/",                      severity: warning, category: external }
     # Core platform
     - name: home-portal
       url: https://example.org/
@@ -149,7 +155,8 @@ probes:
       severity: warning
       category: collaboration
     - name: intercom
-      url: https://intercom.example.org/
+      # Real health endpoint (JSON {status:ok}), not the Hello landing page.
+      url: https://intercom.example.org/health
       severity: warning
       category: collaboration
 
@@ -287,6 +294,10 @@ probes:
       target: stalwart.openedusuite.svc.cluster.local:143
       severity: critical
       category: mail
+    - name: sogo-bbb-relay-shortlink
+      target: sogo-bbb-relay.openedusuite.svc.cluster.local:8445
+      severity: warning
+      category: bbb
 
   # --- TLS probes (tls_connect module) ---
   tls:
@@ -298,19 +309,65 @@ probes:
       target: stalwart.openedusuite.svc.cluster.local:993
       severity: critical
       category: mail
+    # Nativer BBB-Join-Pfad: SOGo-Fork verbindet sich per TLS mit verify auf
+    # 8444. TLS-Handshake hier deckt TCP+TLS ab — die kuerzeste Signatur, die
+    # auch den nativen Relay-Einsatz (ohne Ingress) abbildet.
+    - name: sogo-bbb-relay-join
+      target: sogo-bbb-relay.openedusuite.svc.cluster.local:8444
+      severity: critical
+      category: bbb
 
   # --- SSO flow probes (http_alive module) ---
   # These verify the full SSO redirect chain for each app.
   ssoFlows:
-    - name: keycloak-oidc-discovery
+    # Namen mit sso-keycloak-* / sso-<app>-gate werden von den PrometheusRules
+    # BlackboxSSOCoreDown / BlackboxSSOGateFailed (job="sso-flows") gealertet.
+    # Modul http_alive akzeptiert 200/204/301/302/307/308/400/401/403/404/405/429 —
+    # ein SSO-Gate antwortet 302/303->KC bzw. 403-Wall, beides zaehlt als "alive".
+    - name: sso-keycloak-oidc-discovery
       url: https://id.example.org/realms/openedusuite/.well-known/openid-configuration
       severity: critical
-    - name: keycloak-auth-endpoint
+    - name: sso-keycloak-auth-endpoint
       url: "https://id.example.org/realms/openedusuite/protocol/openid-connect/auth?client_id=account-console&response_type=code&scope=openid&redirect_uri=https%3A%2F%2Fid.example.org%2Frealms%2Fopenedusuite%2Faccount&state=probe"
       severity: critical
-    - name: keycloak-token-endpoint
+    - name: sso-keycloak-token-endpoint
       url: https://id.example.org/realms/openedusuite/protocol/openid-connect/token
       severity: critical
+    # --- pro App ein SSO-Gate (BlackboxSSOGateFailed) ---
+    - { name: sso-portal-home-gate,   url: "https://home.example.org/",            severity: critical }
+    - { name: sso-portal-admin-gate,  url: "https://admin.example.org/",           severity: warning }
+    - { name: sso-nextcloud-gate,     url: "https://nextcloud.example.org/login",  severity: warning }
+    - { name: sso-opencloud-gate,     url: "https://cloud.example.org/login",      severity: warning }
+    - { name: sso-openproject-gate,   url: "https://openproject.example.org/login", severity: warning }
+    - { name: sso-grist-gate,         url: "https://grist.example.org/",           severity: warning }
+    - { name: sso-toss-gate,          url: "https://toss.example.org/",            severity: warning }
+    - { name: sso-xwiki-gate,         url: "https://xwiki.example.org/bin/login/XWiki/XWikiLogin", severity: warning }
+    - { name: sso-xwiki-staff-gate,   url: "https://xwiki-staff.example.org/bin/login/XWiki/XWikiLogin", severity: warning }
+    - { name: sso-sogo5-webmail-gate, url: "https://webmail.example.org/SOGo/",    severity: warning }
+    - { name: sso-sogo-staff-gate,    url: "https://sogo-staff.example.org/SOGo/", severity: warning }
+    - { name: sso-sogo-students-gate, url: "https://sogo-students.example.org/SOGo/", severity: warning }
+    - { name: sso-sogo6-gate,         url: "https://sogo6.example.org/de/auth/login", severity: warning }
+    - { name: sso-matrix-gate,        url: "https://matrix.example.org/_matrix/client/v3/login/sso/redirect?redirectUrl=https%3A%2F%2Fchat.example.org%2F", severity: warning }
+    - { name: sso-element-gate,       url: "https://chat.example.org/config.json", severity: warning }
+    - { name: sso-greenlight-gate,    url: "https://bbb.example.org/",             severity: warning }
+    - { name: sso-calendar-gate,      url: "https://calendar.example.org/auth/login", severity: warning }
+    - { name: sso-openwebui-gate,     url: "https://ai.example.org/",              severity: warning }
+    - { name: sso-f13-gate,           url: "https://f13.example.org/healthz",      severity: warning }
+    - { name: sso-argocd-gate,        url: "https://argocd.example.org/",          severity: warning }
+    - { name: sso-discourse-gate,     url: "https://discourse.example.org/oauth2/start", severity: warning }
+    - { name: sso-indico-gate,        url: "https://indico.example.org/oauth2/start",   severity: warning }
+    - { name: sso-operaton-gate,      url: "https://operaton.example.org/oauth2/start", severity: warning }
+    - { name: sso-rt-gate,            url: "https://rt.example.org/oauth2/start",       severity: warning }
+    - { name: sso-overleaf-gate,      url: "https://overleaf.example.org/oauth2/start", severity: warning }
+    - { name: sso-hedgedoc-gate,      url: "https://hedgedoc.example.org/oauth2/start", severity: warning }
+    - { name: sso-typst-gate,         url: "https://typst.example.org/oauth2/start",   severity: warning }
+    - { name: sso-lms-gate,           url: "https://lms.example.org/oauth2/start",      severity: critical }
+    - { name: sso-openscience-gate,   url: "https://science.example.org/oauth2/start",  severity: warning }
+    - { name: sso-invoicing-gate,     url: "https://invoicing.example.org/oauth2/start", severity: warning }
+    - { name: sso-ewoks-gate,         url: "https://ewoks.example.org/oauth2/start",    severity: warning }
+    - { name: sso-kitodo-gate,        url: "https://kitodo.example.org/",           severity: warning }
+    - { name: sso-dify-gate,          url: "https://dify.example.org/oauth2/start",    severity: warning }
+    - { name: sso-n8n-gate,           url: "https://n8n.example.org/",             severity: warning }
     - name: matrix-login
       url: https://matrix.example.org/_matrix/client/v3/login
       severity: warning

@@ -17,14 +17,14 @@ ingress:
     haproxy-ingress.github.io/timeout-server: "600s"
     haproxy-ingress.github.io/timeout-client: "600s"
   hosts:
-    - host: "files.opendesk.example.com"
+    - host: "files.example.org"
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
-    - secretName: "opendesk-certificates-tls"
+    - secretName: "openedusuite-certificates-tls"
       hosts:
-        - "files.opendesk.example.com"
+        - "files.example.org"
 
 persistence:
   enabled: true
@@ -68,16 +68,16 @@ tolerations: []
 
 affinity: {}
 
-existingSecret: "opendesk-opencloud-secrets"
+existingSecret: "openedusuite-opencloud-secrets"
 
-existingConfigmap: "opendesk-opencloud-config"
+existingConfigmap: "openedusuite-opencloud-config"
 
 oidc:
   enabled: true
-  issuer: "https://portal.opendesk.example.com/realms/opendesk"
-  clientId: "opendesk-opencloud"
+  issuer: "https://portal.example.org/realms/openedusuite"
+  clientId: "openedusuite-opencloud"
   clientSecret: "changeme-replace-with-actual-client-secret"
-  discoveryEndpoint: "https://portal.opendesk.example.com/realms/opendesk/.well-known/openid-configuration"
+  discoveryEndpoint: "https://portal.example.org/realms/openedusuite/.well-known/openid-configuration"
 
 php:
   memoryLimit: "512M"

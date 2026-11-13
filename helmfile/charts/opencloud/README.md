@@ -32,15 +32,15 @@ helm uninstall my-release
 | `replicaCount` | Number of replicas | `2` |
 | `image.repository` | Container image repository | `<your-org>/opencloud` |
 | `image.tag` | Image tag | `v1.0.0` |
-| `oidc.issuer` | OIDC issuer URL | `https://id.opendesk.example.com/realms/opendesk` |
-| `oidc.clientId` | OIDC client ID | `opendesk-opencloud` |
+| `oidc.issuer` | OIDC issuer URL | `https://id.openedusuite.example.com/realms/openedusuite` |
+| `oidc.clientId` | OIDC client ID | `openedusuite-opencloud` |
 | `oidc.clientSecret` | OIDC client secret (required) | `""` |
 | `oidc.autoProvisionAccounts` | Auto-create user accounts on first login | `true` |
 | `persistence.enabled` | Enable persistent storage | `true` |
 | `persistence.size` | Storage size | `100Gi` |
 | `logLevel` | Application log level | `info` |
 | `ingress.enabled` | Enable ingress | `true` |
-| `ingress.hosts[0].host` | Ingress hostname | `opencloud.opendesk.example.com` |
+| `ingress.hosts[0].host` | Ingress hostname | `opencloud.openedusuite.example.com` |
 
 ### Secrets
 

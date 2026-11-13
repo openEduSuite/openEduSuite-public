@@ -1,0 +1,179 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 openEduSuite Contributors
+SPDX-License-Identifier: Apache-2.0
+
+Web services activation for semester-provisioning (plan P1a, step 1).
+Idempotent: safe on every upgrade. The PHP script retries DB connectivity
+because the Job may start before Moodle's first install/upgrade finished.
+*/ -}}
+{{- if .Values.webservicesSetup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "moodle.fullname" . }}-webservices-setup-script
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+data:
+  webservices-setup.php: |
+    <?php
+    // Idempotent web services provisioning for openEduSuite semester API.
+    // Wire format contract: scripts/semester-provisioning/tests/test_moodle_client.py
+
+    // Retry DB connectivity (first install / upgrade may still be running).
+    $tries = 0;
+    while (true) {
+        try {
+            define('CLI_SCRIPT', true);
+            require('/var/www/html/config.php');
+            break;
+        } catch (Throwable $e) {
+            if (++$tries >= 30) {
+                fwrite(STDERR, "Moodle DB not ready: " . $e->getMessage() . "\n");
+                exit(1);
+            }
+            sleep(10);
+        }
+    }
+
+    // 1) Enable web services globally and the REST protocol.
+    set_config('enablewebservices', 1);
+    set_config('enabled', 1, 'webservice_rest');
+
+    // 2) Ensure the external service.
+    $shortname = 'openedusuite_provisioning';
+    $service = $DB->get_record('external_services', array('shortname' => $shortname));
+    if (!$service) {
+        $service = (object) array(
+            'name' => 'openEduSuite Semester Provisioning',
+            'shortname' => $shortname,
+            'enabled' => 1,
+            'restrictedusers' => 0,
+            'timemodified' => time(),
+            'timecreated' => time(),
+        );
+        $service->id = $DB->insert_record('external_services', $service);
+        echo "Created external service {$shortname}\n";
+    } else {
+        $service->enabled = 1;
+        $service->timemodified = time();
+        $DB->update_record('external_services', $service);
+        echo "External service {$shortname} already present\n";
+    }
+
+    // 3) Grant the required WS functions.
+    $functions = array(
+    {{- range .Values.webservicesSetup.functions }}
+        '{{ . }}',
+    {{- end }}
+    );
+    foreach ($functions as $function) {
+        if (!$DB->record_exists('external_services_functions', array(
+            'externalserviceid' => $service->id,
+            'functionname' => $function,
+        ))) {
+            $DB->insert_record('external_services_functions', (object) array(
+                'externalserviceid' => $service->id,
+                'functionname' => $function,
+            ));
+            echo "Granted {$function}\n";
+        }
+    }
+
+    // 4) Apply the WS token from the mounted secret (if present).
+    $token = getenv('WEBSERVICES_TOKEN');
+    $adminuser = getenv('WEBSERVICES_ADMIN') ?: '{{ .Values.webservicesSetup.adminUsername }}';
+    if ($token) {
+        $admin = $DB->get_record('user', array('username' => $adminuser, 'deleted' => 0));
+        if (!$admin) {
+            fwrite(STDERR, "Admin user '{$adminuser}' not found - token not applied\n");
+            exit(1);
+        }
+        $existing = $DB->get_record('external_tokens', array(
+            'externalserviceid' => $service->id,
+            'userid' => $admin->id,
+        ));
+        if (!$existing || $existing->token !== $token) {
+            // Rotate: keep exactly one token per service+user.
+            if ($existing) {
+                $DB->delete_records('external_tokens', array('id' => $existing->id));
+            }
+            $DB->insert_record('external_tokens', (object) array(
+                'token' => $token,
+                'externalserviceid' => $service->id,
+                'userid' => $admin->id,
+                'contextid' => context_system::instance()->id,
+                'creatorid' => $admin->id,
+                'timecreated' => time(),
+                'validuntil' => 0,
+            ));
+            echo "Applied web service token for {$adminuser}\n";
+        } else {
+            echo "Web service token already up to date\n";
+        }
+    } else {
+        echo "WEBSERVICES_TOKEN not set - service enabled, token skipped\n";
+    }
+
+    cache_helper::purge_all();
+    echo "Web services setup complete\n";
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "moodle.fullname" . }}-webservices-setup
+  labels:
+    {{- include "moodle.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.commonAnnotations }}
+    {{- toYaml .Values.commonAnnotations | nindent 4 }}
+    {{- end }}
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        {{- include "moodle.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "moodle.serviceAccountName" . }}
+      containers:
+        - name: webservices-setup
+          image: "{{ .Values.moodle.image }}:{{ .Values.moodle.tag }}"
+          imagePullPolicy: {{ .Values.moodle.pullPolicy | default "IfNotPresent" }}
+          command: ["php", "/setup/webservices-setup.php"]
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: WEBSERVICES_ADMIN
+              value: {{ .Values.webservicesSetup.adminUsername | quote }}
+            {{- if .Values.webservicesSetup.tokenSecret }}
+            - name: WEBSERVICES_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.webservicesSetup.tokenSecret.name | quote }}
+                  key: {{ .Values.webservicesSetup.tokenSecret.key | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: setup-script
+              mountPath: /setup
+              readOnly: true
+            - name: moodle-data
+              mountPath: /var/www/moodledata
+              subPath: moodledata
+      volumes:
+        - name: setup-script
+          configMap:
+            name: {{ include "moodle.fullname" . }}-webservices-setup-script
+        - name: moodle-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-moodle-data
+{{- end }}

@@ -7,8 +7,8 @@ metadata:
 data:
   sso-redirect-check.sh: |
     #!/bin/sh
-    ILIAS_URL="${ILIAS_URL:-https://lms.opendesk.example.com/shib_login.php}"
-    EXPECTED_DOMAIN="${EXPECTED_DOMAIN:-id.opendesk.example.com}"
+    ILIAS_URL="${ILIAS_URL:-https://lms.openedusuite.example.com/shib_login.php}"
+    EXPECTED_DOMAIN="${EXPECTED_DOMAIN:-id.openedusuite.example.com}"
     MAX_REDIRECTS="${MAX_REDIRECTS:-10}"
     TIMEOUT="${TIMEOUT:-30}"
     echo "$(date -I '+%Y-%m-%dT%H:%M:%S%z')"

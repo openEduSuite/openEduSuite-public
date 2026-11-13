@@ -11,11 +11,11 @@ RUN apk add --no-cache curl
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY intercom/package.json intercom/yarn.lock /app/
+COPY package.json yarn.lock /app/
 RUN yarnpkg install --production
 
 # Copy the rest of the app
-COPY intercom/ /app/
+COPY . /app/
 
 ###############################################################################
 FROM base AS dev

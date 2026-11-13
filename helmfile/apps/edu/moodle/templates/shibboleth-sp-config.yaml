@@ -9,7 +9,7 @@ metadata:
   labels:
     app.kubernetes.io/name: moodle
     app.kubernetes.io/component: shibboleth-sp
-    app.kubernetes.io/part-of: opendesk
+    app.kubernetes.io/part-of: openedusuite
 type: Opaque
 data:
   # Shibboleth SP keypair TLS certificate (sp-cert.pem)
@@ -28,7 +28,7 @@ metadata:
   labels:
     app.kubernetes.io/name: moodle
     app.kubernetes.io/component: shibboleth-sp
-    app.kubernetes.io/part-of: opendesk
+    app.kubernetes.io/part-of: openedusuite
 data:
   shibboleth2.xml: |
     <SPConfig xmlns="urn:mace:shibboleth:3.0:native:sp:config"

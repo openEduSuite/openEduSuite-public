@@ -6,7 +6,7 @@
 const jose = require("jose");
 
 const verifyJWT = async (token, issuerBaseUrl, jwks) => {
-  const { payload, protectedheader } = await jose.jwtVerify(
+  const { payload } = await jose.jwtVerify(
     // decode and validates claims set
     token,
     jwks,

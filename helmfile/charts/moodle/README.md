@@ -36,7 +36,7 @@ helm uninstall my-release
 | `moodle.persistence.enabled` | Enable persistence | `true` |
 | `moodle.persistence.size` | Persistent storage size | `8Gi` |
 | `ingress.enabled` | Enable ingress | `false` |
-| `ingress.hosts[0].host` | Ingress hostname | `moodle.opendesk.example.com` |
+| `ingress.hosts[0].host` | Ingress hostname | `moodle.openedusuite.example.com` |
 
 ### Example: Enable Ingress
 

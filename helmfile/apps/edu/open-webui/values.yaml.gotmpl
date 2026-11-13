@@ -1,8 +1,38 @@
 # SPDX-FileCopyrightText: 2026 openEduSuite Contributors
 # SPDX-License-Identifier: Apache-2.0
+#
+# Gehärtete open-webui-Konfiguration (OpenSpec-Change open-webui-hardening):
+#   OW-01  Image digest-gepinnt (SCG-009) — kein beweglicher Tag.
+#   OW-02  LLM-Routing ausschliesslich an in-Cluster-Ollama — kein off-cluster
+#          Cloud-API-Fallback, keine literalen API-Keys.
+#   OW-03  WEBUI_SECRET_KEY aus Secret open-webui (scripts/ensure-open-webui-secret.sh).
+# Vertragstest: tests/sso/check-open-webui-hardening.mjs
 ---
 ollama:
   enabled: false
+image:
+  # Referenzversion v0.13.3 (2026-11-08) — Digest ermittelt via:
+  #   skopeo inspect docker://ghcr.io/open-webui/open-webui:v0.13.3
+  repository: ghcr.io/open-webui/open-webui
+  tag: "@sha256:46b59158e6558eeb980bc828e0f1b30238ad24d82ed84d5e5eda1dab2a082f14"
+  pullPolicy: IfNotPresent
+# In-Cluster-Routing: ollama-next (NS llm) trägt die OpenAI-kompatible API.
+openaiBaseApiUrl: "http://ollama-next.llm.svc.cluster.local:11434/v1"
+ollamaUrls:
+  - "http://ollama-next.llm.svc.cluster.local:11434"
+extraEnvVars:
+  # MCP-Tool-Server (Admin > Integrations, OAuth) benötigen WEBUI_SECRET_KEY —
+  # als Secret-Referenz, nie als Literal (bereitgestellt durch
+  # scripts/ensure-open-webui-secret.sh).
+  - name: WEBUI_SECRET_KEY
+    valueFrom:
+      secretKeyRef:
+        name: open-webui
+        key: webui-secret-key
+  # MCP-Konnektion bleibt bewusst admin-gated und AUS. Erst freischalten,
+  # wenn der MCP-Betrieb (Tool-Server-Allowlist, Access Control) dokumentiert ist:
+  # - name: ENABLE_TOOL_SERVERS
+  #   value: "true"
 ingress:
   enabled: true
   hosts:

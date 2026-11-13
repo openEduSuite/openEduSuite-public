@@ -42,7 +42,7 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: MOODLE_EMAIL
-            value: "admin@opendesk.example.com"
+            value: "admin@openedusuite.example.com"
       - contains:
           path: spec.template.spec.containers[0].env
           content:

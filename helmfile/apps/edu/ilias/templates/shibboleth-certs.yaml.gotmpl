@@ -9,7 +9,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ilias
     app.kubernetes.io/component: shibboleth-sp
-    app.kubernetes.io/part-of: opendesk
+    app.kubernetes.io/part-of: openedusuite
 type: Opaque
 data:
   sp-key.pem: {{ .Values.secrets.shibboleth.spKey | default "" | b64enc }}

@@ -25,13 +25,13 @@ tests:
   - it: should use correct image and tag
     set:
       cronjob.image: srsolutions/ilias
-      cronjob.tag: 9-php8.2-apache
+      cronjob.tag: 10.12-php8.3-apache
     asserts:
       - isKind:
           of: CronJob
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].image
-          value: srsolutions/ilias:9-php8.2-apache
+          value: srsolutions/ilias:10.12-php8.3-apache
   - it: should configure correct command
     asserts:
       - isKind:

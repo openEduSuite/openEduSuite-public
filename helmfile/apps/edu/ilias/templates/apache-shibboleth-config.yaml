@@ -9,10 +9,10 @@ metadata:
   labels:
     app.kubernetes.io/name: ilias
     app.kubernetes.io/component: shibboleth-sp
-    app.kubernetes.io/part-of: opendesk
+    app.kubernetes.io/part-of: openedusuite
 data:
   shibboleth.conf: |
-    ServerName lms.opendesk.example.com
+    ServerName lms.example.org
     UseCanonicalName On
     ShibCompatValidUser Off
     LogLevel mod_shib:debug

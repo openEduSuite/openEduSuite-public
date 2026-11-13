@@ -432,7 +432,7 @@ function ilias_auth_plugin_logout(?string $nameId): bool
     try {
         // Define required constant for ILIAS bootstrap
         if (!defined('ILIAS_HTTP_PATH')) {
-            define('ILIAS_HTTP_PATH', 'https://lms.opendesk.example.com');
+            define('ILIAS_HTTP_PATH', 'https://lms.openedusuite.example.com');
         }
 
         chdir(ILIAS_ROOT);
@@ -592,7 +592,7 @@ function handle_logout_request(): void
         $response = generate_logout_response(
             $parsed['id'],
             $parsed['issuer'] ?? '',
-            'https://' . ($_SERVER['HTTP_HOST'] ?? 'lms.opendesk.example.com') . '/shibboleth'
+            'https://' . ($_SERVER['HTTP_HOST'] ?? 'lms.openedusuite.example.com') . '/shibboleth'
         );
 
         if (strpos(file_get_contents('php://input'), 'soapenv:Envelope') !== false) {

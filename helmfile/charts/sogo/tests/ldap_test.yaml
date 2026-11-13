@@ -14,13 +14,13 @@ tests:
     asserts:
       - matchRegex:
           path: data["ldap.yaml"]
-          pattern: 'baseDN: "ou=users,dc=opendesk,dc=edu"'
+          pattern: 'baseDN: "ou=users,dc=openedusuite,dc=edu"'
 
   - it: should render LDAP bindDN from values
     asserts:
       - matchRegex:
           path: data["ldap.yaml"]
-          pattern: 'bindDN: "uid=sogo,ou=services,dc=opendesk,dc=edu"'
+          pattern: 'bindDN: "uid=sogo,ou=services,dc=openedusuite,dc=edu"'
 
   - it: should render LDAP bindPassword from CI values
     asserts:

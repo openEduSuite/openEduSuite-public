@@ -6,7 +6,15 @@ export interface PortalService {
   /** Optional legacy field (ignored by the UI; availability is monitored). */
   status?: 'live' | 'beta' | 'planned';
   launchUrl: string;
-  ssoEnabled: boolean;
+  /**
+   * Legacy field (ignored by the UI — the blue SSO badges were removed).
+   * SSO is now universal: every catalog app is Keycloak-SSO-protected, which
+   * is enforced by the blackbox suite (tests/sso/pw/pw-*-sso.mjs,
+   * check-sso-matrix.mjs) and the static portal-config contract
+   * (tests/sso/repo-hygiene.mjs). Kept optional so legacy runtime configs
+   * that still carry it (or omit it) remain valid.
+   */
+  ssoEnabled?: boolean;
   icon: string;
 }
 
@@ -45,6 +53,16 @@ export interface PortalConfig {
   widgets?: {
     weather?: { enabled: boolean; src: string; title: string };
     news?: { enabled: boolean; feeds: NewsFeed[] };
+  };
+  /**
+   * VM self-service form (vm-provisioning). catalogUrl and engineWebhook are
+   * same-origin nginx paths; the real files/backend are wired via ConfigMaps
+   * on the portal deployment (see k8s/openedusuite/portal/deploy-portal.yaml).
+   */
+  vmRequest?: {
+    enabled: boolean;
+    catalogUrl: string;
+    engineWebhook: string;
   };
 }
 

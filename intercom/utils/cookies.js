@@ -6,7 +6,13 @@
 const cookie = require("cookie");
 
 const stripIntercomCookies = async (proxyReq) => {
-  const cookies = cookie.parse(proxyReq.getHeader("cookie"));
+  const raw = proxyReq.getHeader("cookie");
+  // A request without a Cookie header must pass through untouched
+  // (cookie.parse(undefined) would throw and kill the proxy request).
+  if (typeof raw !== "string" || raw.length === 0) {
+    return;
+  }
+  const cookies = cookie.parse(raw);
   delete cookies["appSession"];
   if (Object.keys(cookies).length > 0) {
     const keep = Object.keys(cookies).map((c) =>

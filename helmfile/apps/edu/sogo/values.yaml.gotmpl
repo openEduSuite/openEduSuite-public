@@ -12,8 +12,8 @@ sogo:
   ldap:
     host: {{ .Values.ldap.host | default "openldap" }}
     port: {{ .Values.ldap.port | default 389 }}
-    baseDN: {{ .Values.ldap.baseDN | default "ou=users,dc=opendesk,dc=edu" }}
-    bindDN: {{ .Values.ldap.sogoBindDN | default "uid=sogo,ou=services,dc=opendesk,dc=edu" }}
+    baseDN: {{ .Values.ldap.baseDN | default "ou=users,dc=openedusuite,dc=edu" }}
+    bindDN: {{ .Values.ldap.sogoBindDN | default "uid=sogo,ou=services,dc=openedusuite,dc=edu" }}
     bindPassword: {{ .Values.ldap.sogoBindPassword | default "" }}
 
   imap:
@@ -23,11 +23,11 @@ sogo:
   sieve:
     server: {{ .Values.apps.sogo.sieveServer | default "sieve://stalwart-stalwart:4190" }}
 
-  mailDomain: {{ .Values.apps.sogo.mailDomain | default "opendesk.example.com" }}
+  mailDomain: {{ .Values.apps.sogo.mailDomain | default "example.org" }}
 
   oidc:
     enabled: {{ .Values.apps.sogo.oidc.enabled | default true }}
-    configUrl: {{ .Values.apps.sogo.oidc.configUrl | default (printf "https://%s/realms/opendesk/.well-known/openid-configuration" .Values.apps.keycloak.host) }}
+    configUrl: {{ .Values.apps.sogo.oidc.configUrl | default (printf "https://%s/realms/openedusuite/.well-known/openid-configuration" .Values.apps.keycloak.host) }}
     clientId: {{ .Values.apps.sogo.oidc.clientId | default "sogo" }}
     clientSecret: {{ .Values.secrets.keycloak.clientSecret.sogo | default "" | quote }}
     scope: "openid profile email"

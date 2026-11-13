@@ -25,7 +25,7 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls:
-    - secretName: "opendesk-certificates-tls"
+    - secretName: "openedusuite-certificates-tls"
       hosts:
         - {{ printf "%s.%s" .Values.global.hosts.mayan .Values.global.domain | quote }}
 
@@ -83,7 +83,7 @@ mayan:
   # Email configuration (via Stalwart)
   email:
     enabled: true
-    host: "stalwart-stalwart.opendesk.svc.cluster.local"
+    host: "stalwart-stalwart.openedusuite.svc.cluster.local"
     port: 587
     useTls: true
     username: ""
@@ -208,7 +208,7 @@ networkPolicies:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: opendesk
+              name: openedusuite
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: haproxy-ingress

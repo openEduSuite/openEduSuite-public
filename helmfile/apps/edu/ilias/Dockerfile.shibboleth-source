@@ -1,8 +1,35 @@
-# ILIAS with Shibboleth SP 3.5.2 from Debian testing
+# ILIAS 10.12 with Shibboleth SP 3.5.2 from Debian testing
+# Base image: srsolutions/ilias (ILIAS 10.12, PHP 8.3 — PHP 8.2 is EOL since 2025-12)
 # This bypasses the Debian 13 stable shibd validation bug in shibboleth-sp-common 3.5.0+dfsg-2+deb13u1
 # by installing the fixed version from Debian testing repo
 
-FROM srsolutions/ilias:9-php8.2-apache
+FROM srsolutions/ilias:10.12-php8.3-apache
+
+# ---------------------------------------------------------------------------
+# Stage: ILIAS REST plugin (provisioning API for the semester-provisioning
+# service, see scripts/semester-provisioning/api/utils/ilias_client.py).
+#
+# Lineage reality (spike 2026-11-13):
+#   - hrz-unimr/Ilias.RESTPlugin (upstream) is dead since 2018 (ILIAS <=5.2)
+#     but contains the course/user-admin extensions (courses_v2, users_v2).
+#   - oc-group fork (studer+raimann lineage) is ILIAS 9/10 capable
+#     (plugin.php: ilias 9.0-10.999, PHP 8.2+, vendor/ committed) but only
+#     ships ILIAS-App routes (no courses_v2/users_v2).
+# Both use the same extension loader (glob extensions/*/routes/*.php), so we
+# take the ILIAS-9 base and overlay the two admin extensions from upstream.
+# Wire format pinned by tests/test_ilias_client.py. Pins are SHAs — bump
+# deliberately.
+# ---------------------------------------------------------------------------
+FROM alpine/git:2.47.2 AS rest-plugin
+ARG REST_PLUGIN_BASE_REF=ac5bdc34a80110f9f3bbd5e1fd0035bde0a7dbfb
+ARG REST_PLUGIN_UPSTREAM_REF=ec32292ffa0df801501b260fd880adcef0687421
+RUN git clone --quiet https://github.com/oc-group/ilias-uihk_restplugin.git /REST \
+    && cd /REST && git checkout --detach "$REST_PLUGIN_BASE_REF" \
+    && git clone --quiet https://github.com/hrz-unimr/Ilias.RESTPlugin.git /upstream \
+    && cd /upstream && git checkout --detach "$REST_PLUGIN_UPSTREAM_REF" \
+    && cp -r /upstream/RESTController/extensions/courses_v2 /REST/RESTController/extensions/ \
+    && cp -r /upstream/RESTController/extensions/users_v2 /REST/RESTController/extensions/ \
+    && rm -rf /REST/.git /upstream
 
 USER root
 
@@ -24,6 +51,12 @@ RUN mkdir -p /var/run/shibboleth /var/log/shibboleth /var/lib/shibboleth /var/ca
 # This is required because mod_shib needs shibd running to process SAML requests
 # Note: The Helm chart sets command=["apache2-foreground"], which Docker passes as
 # arguments to the entrypoint. We ignore them and always run shibd + Apache.
+# Install the REST plugin into the ILIAS plugin slot (activation and REST
+# client registration happen once via ILIAS Admin UI — see
+# docs/plans/2026-11-13-integration-priorities.md, ILIAS spike runbook).
+COPY --from=rest-plugin --chown=www-data:www-data /REST \
+  /var/www/html/Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/REST
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

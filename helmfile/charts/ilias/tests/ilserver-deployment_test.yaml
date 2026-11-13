@@ -18,13 +18,13 @@ tests:
   - it: should use correct image and tag
     set:
       iliasRPCServer.image: srsolutions/ilias-ilserver
-      iliasRPCServer.tag: 9-openjdk17-jre
+      iliasRPCServer.tag: 10-openjdk17-jre
     asserts:
       - isKind:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].image
-          value: srsolutions/ilias-ilserver:9-openjdk17-jre
+          value: srsolutions/ilias-ilserver:10-openjdk17-jre
   - it: should set correct container port
     asserts:
       - isKind:

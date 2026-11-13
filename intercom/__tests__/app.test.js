@@ -1,8 +1,10 @@
 const request = require('supertest');
 
-describe('Express app', () => {
-  let app;
+// Hoisted so the top-level metrics describe can reach the app instance
+// booted by the 'Express app' beforeAll.
+let app;
 
+describe('Express app', () => {
   beforeAll(() => {
     jest.resetModules();
     process.env.ISSUER_BASE_URL = 'http://keycloak.test:8080/auth/realms/test';
@@ -70,3 +72,22 @@ describe('Express app', () => {
     });
   });
 });
+
+  describe('metrics endpoint (no auth)', () => {
+    test('GET /metrics returns the prometheus text format', async () => {
+      const res = await request(app).get('/metrics');
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/^text\/plain/);
+      expect(res.text).toContain('intercom_http_requests_total');
+      expect(res.text).toContain('intercom_http_request_duration_seconds');
+      expect(res.text).toContain('intercom_proxy_requests_total');
+      expect(res.text).toContain('intercom_redis_connected');
+    });
+
+    test('GET /metrics does not require auth and is not counted itself', async () => {
+      const res1 = await request(app).get('/metrics');
+      expect(res1.status).toBe(200);
+      // no /metrics route label may ever be recorded
+      expect(res1.text).not.toMatch(/intercom_http_requests_total\{[^}]*route="\/metrics"/);
+    });
+  });

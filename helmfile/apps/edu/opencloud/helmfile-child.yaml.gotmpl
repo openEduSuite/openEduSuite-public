@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 releases:
-  - name: "opendesk-opencloud"
+  - name: "openedusuite-opencloud"
     chart: "../../../charts/opencloud"
     wait: true
     values:
       - "values.yaml.gotmpl"
-      {{- range .Values | dig "customization" "release" "opendeskOpencloud" (list) }}
+      {{- range .Values | dig "customization" "release" "openedusuiteOpencloud" (list) }}
       - {{ . }}
       {{- end }}
     installed: {{ .Values | dig "apps" "opencloud" "enabled" true }}

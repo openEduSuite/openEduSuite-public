@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  openEduSuite — Projektübersicht (Landing-Poster)
+  Proportionen nach dem Goldenen Schnitt (φ ≈ 1,618):
+    · Poster 1680×1040 (Verhältnis φ)
+    · Kopfzone endet bei y=643 (1040/φ); Kachelraster darunter
+    · 10 Kacheln 2×5, je 256×158 (Verhältnis φ), Abstand 40
+    · Kachel-Inhalte werden im 340er-Maß gezeichnet und mit scale(0.753)
+      auf 256 herunterskaliert (identische Geometrie, kleiner Steg)
+  Heller „Poster“-Grund: funktioniert auf hellem UND dunklem Seitenhintergrund.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1040" role="img"
+     aria-label="openEduSuite Projektübersicht: ein Login für Mail, Chat, Cloud, Video, Dokumente, Kalender, Identität, KI, Forschung und Assistent">
+  <defs>
+    <linearGradient id="oe-brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="oe-head" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#eff6ff"/>
+      <stop offset="1" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Poster-Grund -->
+  <rect x="0" y="0" width="1680" height="1040" rx="24" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Kopfzone (bis y=643) -->
+  <rect x="0" y="0" width="1680" height="643" rx="24" fill="url(#oe-head)"/>
+  <rect x="0" y="619" width="1680" height="24" fill="#f8fafc"/>
+
+  <!-- Brand-Marke: gerundetes Quadrat + Monogramm -->
+  <g transform="translate(120,150)">
+    <rect x="0" y="0" width="120" height="120" rx="30" fill="url(#oe-brand)"/>
+    <text x="60" y="76" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+          font-size="46" font-weight="700" fill="#ffffff">oE</text>
+  </g>
+  <text x="290" y="196" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="64" font-weight="700" fill="#0f172a">openEduSuite</text>
+  <text x="292" y="256" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="30" fill="#475569">Ein Login — alle Dienste der Universität.</text>
+
+  <!-- Kopfzeile rechts: Leistungsbilanz -->
+  <text x="1560" y="174" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="24" font-weight="600" fill="#0f172a">32 Dienste · ein Login</text>
+  <text x="1560" y="204" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="18" fill="#64748b">Stand: November 2026</text>
+
+  <!-- Single-Sign-On-Andeutung: Login-Punkt verzweigt zu allen Kacheln -->
+  <g stroke="#94a3b8" stroke-width="3" stroke-dasharray="2 8" fill="none" opacity="0.9">
+    <path d="M 180 330 C 300 380 520 420 480 470"/>
+    <path d="M 240 340 C 480 400 700 410 840 470"/>
+    <path d="M 340 350 C 700 420 1000 420 1200 470"/>
+    <path d="M 430 350 C 940 430 1300 430 1560 470"/>
+  </g>
+  <circle cx="180" cy="330" r="26" fill="url(#oe-brand)"/>
+  <text x="180" y="340" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="22" font-weight="700" fill="#ffffff">SSO</text>
+
+  <!-- Kachelraster 2×5 (y=643 … 999) — je 256×158 (φ), Abstand 40 -->
+  <!-- Kacheln werden im 340er-Maß gezeichnet und mit scale(0.753) herunterskaliert. -->
+  <g transform="translate(120,643) scale(0.75294118)">
+    <!-- Zeile 1, Spalte 1: Mail -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#2563eb"/>
+      <g transform="translate(122,58)" fill="none" stroke="#2563eb" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="0" y="6" width="96" height="68" rx="10"/>
+        <path d="M 4 14 L 48 46 L 92 14"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Mail</text>
+    </g>
+  </g>
+  <g transform="translate(416,643) scale(0.75294118)">
+    <!-- Zeile 1, Spalte 2: Chat -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#7c3aed"/>
+      <g transform="translate(122,54)" fill="none" stroke="#7c3aed" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 8 10 q 0 -8 8 -8 h 72 q 8 0 8 8 v 44 q 0 8 -8 8 h -44 l -20 18 v -18 h -8 q -8 0 -8 -8 z"/>
+        <circle cx="32" cy="32" r="3.5" fill="#7c3aed" stroke="none"/>
+        <circle cx="48" cy="32" r="3.5" fill="#7c3aed" stroke="none"/>
+        <circle cx="64" cy="32" r="3.5" fill="#7c3aed" stroke="none"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Chat</text>
+    </g>
+  </g>
+  <g transform="translate(712,643) scale(0.75294118)">
+    <!-- Zeile 1, Spalte 3: Cloud -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#0891b2"/>
+      <g transform="translate(122,66)" fill="none" stroke="#0891b2" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 24 66 h 52 a 20 20 0 0 0 6 -39 a 30 30 0 0 0 -58 -8 a 22 22 0 0 0 0 47 z"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Cloud</text>
+    </g>
+  </g>
+  <g transform="translate(1008,643) scale(0.75294118)">
+    <!-- Zeile 1, Spalte 4: Video -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#e11d48"/>
+      <g transform="translate(122,62)" fill="none" stroke="#e11d48" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="0" y="10" width="64" height="52" rx="10"/>
+        <path d="M 70 26 L 96 12 v 48 l -26 -14"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Video</text>
+    </g>
+  </g>
+  <g transform="translate(1304,643) scale(0.75294118)">
+    <!-- Zeile 1, Spalte 5: Forschung (OpenScience) -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#0d9488"/>
+      <g transform="translate(122,58)" fill="none" stroke="#0d9488" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 34 4 h 28"/>
+        <path d="M 42 4 v 22 l -24 36 a 10 10 0 0 0 8 16 h 44 a 10 10 0 0 0 8 -16 l -24 -36 v -22"/>
+        <path d="M 18 58 h 60"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Forschung</text>
+    </g>
+  </g>
+  <g transform="translate(120,841) scale(0.75294118)">
+    <!-- Zeile 2, Spalte 1: Dokumente -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#d97706"/>
+      <g transform="translate(130,54)" fill="none" stroke="#d97706" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 10 0 h 44 l 22 22 v 50 h -66 z"/>
+        <path d="M 54 0 v 22 h 22"/>
+        <path d="M 26 40 h 34 M 26 56 h 34"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Dokumente</text>
+    </g>
+  </g>
+  <g transform="translate(416,841) scale(0.75294118)">
+    <!-- Zeile 2, Spalte 2: Kalender -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#059669"/>
+      <g transform="translate(124,58)" fill="none" stroke="#059669" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="0" y="10" width="88" height="72" rx="10"/>
+        <path d="M 0 34 h 88"/>
+        <path d="M 22 0 v 18 M 66 0 v 18"/>
+        <circle cx="28" cy="58" r="4" fill="#059669" stroke="none"/>
+        <circle cx="48" cy="58" r="4" fill="#059669" stroke="none"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Kalender</text>
+    </g>
+  </g>
+  <g transform="translate(712,841) scale(0.75294118)">
+    <!-- Zeile 2, Spalte 3: Identität -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#475569"/>
+      <g transform="translate(124,56)" fill="none" stroke="#475569" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M 44 4 l 36 14 v 28 q 0 34 -36 46 q -36 -12 -36 -46 v -28 z"/>
+        <circle cx="44" cy="40" r="12"/>
+        <path d="M 26 72 q 6 -14 18 -14 q 12 0 18 14"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Identität</text>
+    </g>
+  </g>
+  <g transform="translate(1008,841) scale(0.75294118)">
+    <!-- Zeile 2, Spalte 4: KI -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#0284c7"/>
+      <g transform="translate(124,58)" fill="#0284c7">
+        <path d="M 40 0 l 8 24 24 8 -24 8 -8 24 -8 -24 -24 -8 24 -8 z"/>
+        <path d="M 76 44 l 5 14 14 5 -14 5 -5 14 -5 -14 -14 -5 14 -5 z"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">KI</text>
+    </g>
+  </g>
+  <g transform="translate(1304,841) scale(0.75294118)">
+    <!-- Zeile 2, Spalte 5: Assistent (F13) -->
+    <g>
+      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+      <rect width="340" height="6" rx="3" fill="#c026d3"/>
+      <g transform="translate(122,58)" fill="none" stroke="#c026d3" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+        <rect x="10" y="10" width="76" height="76" rx="16"/>
+      </g>
+      <g transform="translate(122,58)" fill="#c026d3">
+        <path d="M 48 28 l 4 12 12 4 -12 4 -4 12 -4 -12 -12 -4 12 -4 z"/>
+      </g>
+      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+            font-size="28" font-weight="600" fill="#334155">Assistent</text>
+    </g>
+  </g>
+
+  <!-- Fußzeile -->
+  <text x="840" y="1026" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="18" fill="#64748b">openEduSuite — 32 Dienste für Lehre, Studium und Forschung · Stand: November 2026</text>
+</svg>

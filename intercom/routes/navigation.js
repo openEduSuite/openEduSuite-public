@@ -3,47 +3,39 @@
  * SPDX-FileCopyrightText: 2024-2025 Univention GmbH
  */
 
-const express = require("express");
-const router = express.Router();
+const createIntercomRoute = require("./base");
+const { logger } = require("../utils");
+const { portal, usernameClaim } = require("../config");
 
-const { createProxyMiddleware } = require("http-proxy-middleware");
+/* global Buffer */
 
-const { stripIntercomCookies, massageCors, logger } = require("../utils");
-const { corsOptions, logLevel, portal, usernameClaim } = require("../config");
-
-if (portal.url) {
-  router.use(
-    "/",
-    createProxyMiddleware({
-      target: portal.url,
-      logLevel,
-      logger,
-      changeOrigin: true,
-      pathRewrite: { "^/navigation.json": "/univention/portal/navigation.json" },
-      onProxyReq: function onProxyReq(proxyReq, req, res) {
-        stripIntercomCookies(proxyReq);
-        if (!req?.decodedIdToken?.[usernameClaim]) {
-          logger.error("No claim %s found in the id_token", usernameClaim);
-          logger.error("Error setting Authorization Header for portal.json");
-          return;
-        }
-        proxyReq.setHeader(
-          "Authorization",
-          "Basic " +
-            Buffer.from(
-              req.decodedIdToken[usernameClaim] + ":" + portal.secret,
-            ).toString("base64"),
-        );
-      },
-      onProxyRes: function (proxyRes, req, res) {
-        massageCors(req, proxyRes, corsOptions.origin);
-      },
-    }),
-  );
-} else {
-  router.use("/", (req, res) => {
-    res.status(404).json({ error: "Portal integration is not configured" });
-  });
-}
-
-module.exports = router;
+/**
+ * @name /navigation.json
+ * @desc
+ * Proxy to the portal for global Navigation Data.
+ * Extends the shared Univention ICS base; authenticates against the portal
+ * with a Basic header derived from the id_token username claim instead of a
+ * bearer token.
+ */
+module.exports = createIntercomRoute({
+  name: "Portal",
+  config: portal,
+  mountPrefix: "/navigation.json",
+  pathRewrite: { "^/navigation.json": "/univention/portal/navigation.json" },
+  bearerAuth: false,
+  disabledMessage: "Portal integration is not configured",
+  onAuth(proxyReq, req) {
+    if (!req?.decodedIdToken?.[usernameClaim]) {
+      logger.error("No claim %s found in the id_token", usernameClaim);
+      logger.error("Error setting Authorization Header for portal.json");
+      return;
+    }
+    proxyReq.setHeader(
+      "Authorization",
+      "Basic " +
+        Buffer.from(
+          req.decodedIdToken[usernameClaim] + ":" + portal.secret,
+        ).toString("base64"),
+    );
+  },
+});

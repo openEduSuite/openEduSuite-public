@@ -37,12 +37,12 @@ helm uninstall my-release
 | `sogo.db.host` | PostgreSQL host | `postgresql` |
 | `sogo.db.user` | Database username | `sogo` |
 | `sogo.ldap.host` | LDAP server hostname | `openldap` |
-| `sogo.ldap.baseDN` | LDAP base DN | `ou=users,dc=opendesk,dc=edu` |
+| `sogo.ldap.baseDN` | LDAP base DN | `ou=users,dc=openedusuite,dc=edu` |
 | `sogo.imap.server` | IMAP server URL | `imaps://dovecot:993` |
 | `sogo.smtp.server` | SMTP server URL | `smtp://postfix:587` |
-| `sogo.mailDomain` | Default mail domain | `opendesk.example.com` |
+| `sogo.mailDomain` | Default mail domain | `openedusuite.example.com` |
 | `sogo.oidc.enabled` | Enable Keycloak OIDC/SSO | `false` |
 | `sogo.persistence.size` | Persistent storage size | `1Gi` |
 | `sogo.resources.requests.cpu/memory` | Pod resource requests | `250m / 512Mi` |
 | `ingress.enabled` | Enable ingress | `true` |
-| `ingress.hosts[0].host` | Ingress hostname | `sogo.opendesk.example.com` |
+| `ingress.hosts[0].host` | Ingress hostname | `sogo.openedusuite.example.com` |

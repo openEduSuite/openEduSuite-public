@@ -25,7 +25,7 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls:
-    - secretName: "opendesk-certificates-tls"
+    - secretName: "openedusuite-certificates-tls"
       hosts:
         - {{ printf "%s.%s" .Values.global.hosts.paperless .Values.global.domain | quote }}
 
@@ -99,7 +99,7 @@ paperless:
     enabled: true
     imap:
       enabled: true
-      host: "stalwart-stalwart.opendesk.svc.cluster.local"
+      host: "stalwart-stalwart.openedusuite.svc.cluster.local"
       port: 993
       ssl: true
       username: ""
@@ -198,7 +198,7 @@ networkPolicies:
     - from:
         - namespaceSelector:
             matchLabels:
-              name: opendesk
+              name: openedusuite
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: haproxy-ingress

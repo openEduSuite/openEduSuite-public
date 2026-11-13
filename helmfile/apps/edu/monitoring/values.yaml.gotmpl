@@ -9,10 +9,14 @@
 # Blackbox probes
 # ---------------------------------------------------------------------------
 # All probe targets are defined in the chart's values.yaml.
-# Override the blackbox exporter address if needed.
-blackboxProbes:
-  blackboxExporter:
-    address: blackbox-exporter.monitoring.svc.cluster.local:9115
+# Phase-1: no prometheus-operator (no PrometheusRule CRD) — disable the chart's
+# alert-rule rendering so only the probe-target ConfigMap is produced; re-enable
+# once the monitoring stack (and its CRDs) is installed. Keys are CHART-level
+# (the chart does not nest under blackboxProbes).
+alerts:
+  enabled: false
+blackboxExporter:
+  address: blackbox-exporter.monitoring.svc.cluster.local:9115
 
 # ---------------------------------------------------------------------------
 # OpenTelemetry Collector

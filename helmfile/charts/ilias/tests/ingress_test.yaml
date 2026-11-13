@@ -15,7 +15,7 @@ tests:
     asserts:
       - equal:
           path: spec.rules[0].host
-          value: "lms.opendesk.example.com"
+          value: "lms.openedusuite.example.com"
 
   - it: should not create an Ingress when disabled
     set:

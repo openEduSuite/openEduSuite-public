@@ -25,13 +25,13 @@ tests:
   - it: should use correct image and tag
     set:
       ilias.image: srsolutions/ilias
-      ilias.tag: 9-php8.2-apache
+      ilias.tag: 10.12-php8.3-apache
     asserts:
       - isKind:
           of: Deployment
       - equal:
           path: spec.template.spec.containers[0].image
-          value: srsolutions/ilias:9-php8.2-apache
+          value: srsolutions/ilias:10.12-php8.3-apache
   - it: should configure correct command
     asserts:
       - isKind:

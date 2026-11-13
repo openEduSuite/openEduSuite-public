@@ -4,53 +4,19 @@
  * SPDX-FileCopyrightText: 2026 openEDU Team
  */
 
-const express = require("express");
-const router = express.Router();
-
-const { createProxyMiddleware } = require("http-proxy-middleware");
-
-const { stripIntercomCookies, massageCors, logger } = require("../utils");
-const { corsOptions, logLevel, sogo } = require("../config");
+const createIntercomRoute = require("./base");
+const { sogo } = require("../config");
 
 /**
  * @name /sogo/
  * @desc
  * Proxy for SOGo Groupware (CalDAV, CardDAV, mail).
- * Adds the proper Authorization Header via OIDC token exchange.
+ * Extends the shared Univention ICS base; adds the proper Authorization
+ * Header via OIDC token exchange.
  */
-if (sogo.enabled && sogo.url) {
-  router.use(
-    "/",
-    createProxyMiddleware({
-      target: sogo.url,
-      logLevel,
-      logger,
-      changeOrigin: true,
-      pathRewrite: {
-        "^/sogo": "",
-      },
-      onProxyReq: function onProxyReq(proxyReq, req, res) {
-        stripIntercomCookies(proxyReq);
-        if (!req.appSession[sogo.session_storage_key]) {
-          logger.info(
-            "No SOGo session found in appSession. Likely SOGo is not configured",
-          );
-          return;
-        }
-        proxyReq.setHeader(
-          "authorization",
-          `Bearer ${req.appSession[sogo.session_storage_key]}`,
-        );
-      },
-      onProxyRes: function (proxyRes, req, res) {
-        massageCors(req, proxyRes, corsOptions.origin);
-      },
-    }),
-  );
-} else {
-  router.use("/", (req, res) => {
-    res.status(404).json({ error: "SOGo integration is not enabled" });
-  });
-}
-
-module.exports = router;
+module.exports = createIntercomRoute({
+  name: "SOGo",
+  config: sogo,
+  mountPrefix: "/sogo",
+  enabled: Boolean(sogo.enabled && sogo.url),
+});

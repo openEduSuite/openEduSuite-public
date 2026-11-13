@@ -1,36 +1,97 @@
 # SPDX-FileCopyrightText: 2026 openEduSuite Contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# Monitoring app — blackbox probes, OpenTelemetry collector, Tempo
-# Deploys the observability stack: blackbox health probes, OTel collector,
+# Monitoring app — blackbox probes, Prometheus rules, Prometheus Operator,
+# OpenTelemetry collector, Tempo
+# Deploys the observability stack: blackbox health probes, git-managed Prometheus
+# alert rules (prometheus-rules ConfigMap), the Kubernetes Prometheus Operator
+# (CRDs + operator; the Prometheus CR is flipped on via values), OTel collector,
 # and Tempo tracing backend.
 ---
 releases:
   # Blackbox health probes — all ingress endpoints + alerts
   - name: blackbox-probes
+    namespace: "openedusuite"
     chart: ../../../charts/blackbox-probes
     wait: true
     values:
       - "values.yaml.gotmpl"
-    installed: {{ .Values.apps.blackboxProbes.enabled | default true }}
+    installed: {{ dig "apps" "blackboxProbes" "enabled" true .Values }}
+    timeout: 120
+
+  # Kubernetes Prometheus Operator — installs only the operator + CRDs.
+  # Grafana / Alertmanager / kube-state-metrics / node-exporter stay free-form
+  # (live objects, kept running untouched); the chart's bundled copies are
+  # disabled beneath. `prometheus.enabled: false` means NO Prometheus CR yet —
+  # flipping it to true (with full prometheusSpec) is the next phase of the
+  # migration to the operator-managed Prometheus. Chart vendored as an exact
+  # pin because the ArgoCD helmfile CMP renders offline (no chart repo access).
+  - name: kube-prometheus-stack
+    namespace: "monitoring"
+    chart: ../../../charts/kube-prometheus-stack
+    wait: true
+    installed: {{ dig "apps" "kubePrometheusStack" "enabled" true .Values }}
+    timeout: 300
+    values:
+      - grafana:
+          enabled: false
+        alertmanager:
+          enabled: false
+        kubeStateMetrics:
+          enabled: false
+        nodeExporter:
+          enabled: false
+        windowsExporter:
+          enabled: false
+        prometheus:
+          enabled: false
+        # Don't emit k8s-component ServiceMonitors until the Prometheus CR is on.
+        kubeApiServer:
+          enabled: false
+        kubelet:
+          enabled: false
+        coreDns:
+          enabled: false
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeProxy:
+          enabled: false
+        kubeEtcd:
+          enabled: false
+        defaultRules:
+          create: false
+
+  # Prometheus alert/recording rules — renders the `prometheus-rules` ConfigMap
+  # that the monitoring Prometheus mounts at /etc/prometheus/rules. Source of
+  # truth: helmfile/charts/prometheus-rules/files/*.yml. Managed by this ArgoCD
+  # app, so out-of-band edits to the live ConfigMap are reverted on sync.
+  - name: prometheus-rules
+    namespace: "monitoring"
+    chart: ../../../charts/prometheus-rules
+    wait: true
+    installed: {{ dig "apps" "prometheusRules" "enabled" true .Values }}
     timeout: 120
 
   # OpenTelemetry Collector — distributed tracing agent + gateway
   - name: otel-collector
+    namespace: "openedusuite"
     chart: ../../../charts/opentelemetry-collector
     wait: true
     values:
       - "values.yaml.gotmpl"
-    installed: {{ .Values.apps.otelCollector.enabled | default false }}
+    installed: {{ dig "apps" "otelCollector" "enabled" false .Values }}
     timeout: 300
 
   # Tempo — distributed tracing backend (stores traces from OTel collector)
   - name: tempo
+    namespace: "openedusuite"
     chart: ../../../charts/tempo
     wait: true
     values:
       - "values.yaml.gotmpl"
-    installed: {{ .Values.apps.tempo.enabled | default false }}
+    installed: {{ dig "apps" "tempo" "enabled" false .Values }}
     timeout: 300
 
 commonLabels:

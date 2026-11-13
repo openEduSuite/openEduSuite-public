@@ -4,7 +4,7 @@ moodle:
   tag: "v1.4.0"
   moodleUsername: "admin"
   moodlePassword: ""
-  moodleEmail: "admin@opendesk.example.com"
+  moodleEmail: "admin@openedusuite.example.com"
   moodleSiteName: "openDesk Moodle"
   moodleSkipInstall: false
 
@@ -31,14 +31,14 @@ ingress:
   className: "haproxy"
   annotations: {}
   hosts:
-    - host: "moodle.opendesk.example.com"
+    - host: "moodle.example.org"
       paths:
         - path: /
           pathType: "ImplementationSpecific"
   tls:
-    - secretName: "opendesk-certificates-tls"
+    - secretName: "openedusuite-certificates-tls"
       hosts:
-        - "moodle.opendesk.example.com"
+        - "moodle.example.org"
 
 resources:
   requests:
@@ -84,7 +84,37 @@ persistence:
 sso:
   saml:
     enabled: true
-    entityId: https://moodle.opendesk.example.com/shibboleth
-    idpEntityId: https://id.opendesk.example.com/realms/opendesk
-    idpSsoUrl: https://id.opendesk.example.com/realms/opendesk/protocol/saml
-    idpMetadataUrl: https://id.opendesk.example.com/realms/opendesk/protocol/saml/descriptor
+    entityId: https://moodle.openedusuite.example.com/shibboleth
+    idpEntityId: https://id.openedusuite.example.com/realms/openedusuite
+    idpSsoUrl: https://id.openedusuite.example.com/realms/openedusuite/protocol/saml
+    idpMetadataUrl: https://id.openedusuite.example.com/realms/openedusuite/protocol/saml/descriptor
+
+# Web services activation for the openEduSuite semester-provisioning API
+# (docs/plans/2026-11-13-integration-priorities.md, step P1a).
+# EN: When enabled, a post-install Job activates Moodle web services, the
+#     REST protocol, the "openedusuite_provisioning" external service and
+#     (if the token secret exists) applies the WS token.
+# DE: Bei Aktivierung richtet ein Post-Install-Job die Moodle-Webservices,
+#     das REST-Protokoll, den External Service "openedusuite_provisioning"
+#     und (falls das Token-Secret existiert) den WS-Token ein.
+webservicesSetup:
+  enabled: false
+  # Kubernetes secret (created by the operator via sops) that holds the
+  # web service token used by semester-provisioning (MOODLE_API_TOKEN).
+  tokenSecret:
+    name: "moodle-webservices-token"
+    key: "token"
+  # Moodle admin user that owns the token.
+  adminUsername: "admin"
+  # WS functions granted to the external service (wire format pinned by
+  # scripts/semester-provisioning/tests/test_moodle_client.py).
+  functions:
+    - core_webservice_get_site_info
+    - core_course_get_courses_by_field
+    - core_course_create_courses
+    - core_course_update_courses
+    - core_course_delete_courses
+    - core_user_get_users_by_field
+    - enrol_manual_enrol_users
+    - enrol_manual_unenrol_users
+    - core_enrol_get_enrolled_users

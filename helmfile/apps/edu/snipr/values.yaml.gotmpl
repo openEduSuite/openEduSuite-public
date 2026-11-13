@@ -26,7 +26,7 @@ snipr:
   # SSO configuration (Keycloak OIDC)
   sso:
     keycloak:
-      realm: {{ .Values.global.keycloak.realm | default "opendesk" | quote }}
+      realm: {{ .Values.global.keycloak.realm | default "openedusuite" | quote }}
       clientId: {{ .Values.apps.snipr.sso.clientId | default "snipr" | quote }}
 
   # LTI 1.3 configuration
@@ -57,7 +57,7 @@ ingress:
         - path: "/"
           pathType: "Prefix"
   tls:
-    - secretName: "opendesk-certificates-tls"
+    - secretName: "openedusuite-certificates-tls"
       hosts:
         - "snipr.{{ .Values.global.domain }}"
 

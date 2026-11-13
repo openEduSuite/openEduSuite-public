@@ -38,7 +38,7 @@ sogo:
   
   oidc:
     enabled: true
-    configUrl: https://id.desk.example.org/realms/opendesk/.well-known/openid-configuration
+    configUrl: https://id.desk.example.org/realms/openedusuite/.well-known/openid-configuration
     clientId: sogo
     clientSecret: auto-generated
     scope: "openid profile email"

@@ -22,6 +22,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const oc = require('../routes/oc');
@@ -46,6 +47,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const webdav = require('../routes/webdav');
@@ -68,6 +70,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const webdav = require('../routes/webdav');
@@ -92,6 +95,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const sogo = require('../routes/sogo');
@@ -116,6 +120,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const ilias = require('../routes/ilias');
@@ -138,6 +143,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const ilias = require('../routes/ilias');
@@ -180,6 +186,13 @@ describe('route graceful disable', () => {
 
     test('B1 route forwards the proxy secret to ILIAS when configured (anti-spoof)', async () => {
       const http = require('http');
+      // Header name is a LEGACY functional identifier shared with the deployed
+      // ILIAS Apache (k8s/openedusuite/configmap-ilias.yaml compares
+      // HTTP_X_OPENDESK_PROXY_SECRET against ILIAS_PROXY_SECRET). The 2026-11-08
+      // rebrand renamed it here by accident while code + ILIAS config kept the
+      // OpenDesk wire name — do NOT rename without a coordinated code+test+
+      // ILIAS-Apache rollout (see docs/AGENTS.md rebrand rule: functional
+      // identifiers stay unchanged).
       let seenSecret = null;
       const target = http.createServer((req, res) => {
         seenSecret = req.headers['x-opendesk-proxy-secret'] || null;
@@ -205,6 +218,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const ilias = require('../routes/ilias');
@@ -252,6 +266,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const ilias = require('../routes/ilias');
@@ -295,6 +310,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const ilias = require('../routes/ilias');
@@ -321,6 +337,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const fs = require('../routes/fs');
@@ -345,6 +362,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const wiki = require('../routes/wiki');
@@ -369,6 +387,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const nob = require('../routes/nob');
@@ -393,6 +412,7 @@ describe('route graceful disable', () => {
       jest.doMock('../utils', () => ({
         stripIntercomCookies: jest.fn(),
         massageCors: jest.fn(),
+        incrementProxyRequest: jest.fn(),
         logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
       }));
       const navigation = require('../routes/navigation');
@@ -401,5 +421,167 @@ describe('route graceful disable', () => {
       expect(res.status).toBe(404);
       expect(res.body).toEqual({ error: 'Portal integration is not configured' });
     });
+  });
+});
+
+describe('routes with proxy enabled (shared Univention ICS base)', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  // Load a route with the given config; every enabled mount routes through
+  // createProxyMiddleware whose options are captured for inspection.
+  function loadWithConfig(cfg, utilsOverrides = {}) {
+    const captured = { options: null };
+    const mockProxy = jest.fn((req, res) => res.status(200).json({ ok: true }));
+    jest.doMock('http-proxy-middleware', () => ({
+      createProxyMiddleware: (opts) => {
+        captured.options = opts;
+        return mockProxy;
+      },
+    }));
+    jest.doMock('../config', () => cfg);
+    jest.doMock('../utils', () => ({
+      stripIntercomCookies: jest.fn(),
+      massageCors: jest.fn(),
+      incrementProxyRequest: jest.fn(),
+      logger: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
+      ...utilsOverrides,
+    }));
+    return { captured, mockProxy };
+  }
+
+  test('OpenCloud route (/oc) proxies with opencloud target and path rewrite', async () => {
+    const { captured } = loadWithConfig({
+      opencloud: { enabled: true, url: 'https://oc.example.com', session_storage_key: 'oc_access_token' },
+      corsOptions: { origin: '.*' },
+      logLevel: 'silent',
+    });
+    const oc = require('../routes/oc');
+    const app = createAppForRoute('/oc', oc);
+    const res = await request(app).get('/oc/dav/files/user/');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true });
+    expect(captured.options.target).toBe('https://oc.example.com');
+    expect(captured.options.pathRewrite).toEqual({ '^/oc': '' });
+  });
+
+  test('Nextcloud route (/nextcloud) proxies with nextcloud target', async () => {
+    const { captured } = loadWithConfig({
+      nextcloud: { enabled: true, url: 'https://nc.example.com', session_storage_key: 'nc_access_token' },
+      corsOptions: { origin: '.*' },
+      logLevel: 'silent',
+    });
+    const nc = require('../routes/nc');
+    const app = createAppForRoute('/nextcloud', nc);
+    await request(app).get('/nextcloud/apps/').expect(200);
+    expect(captured.options.target).toBe('https://nc.example.com');
+    expect(captured.options.pathRewrite).toEqual({ '^/nextcloud': '' });
+  });
+
+  test('SOGo route (/sogo) proxies with sogo target', async () => {
+    const { captured } = loadWithConfig({
+      sogo: { enabled: true, url: 'https://sogo.example.com', session_storage_key: 'sogo_access_token' },
+      corsOptions: { origin: '.*' },
+      logLevel: 'silent',
+    });
+    const sogo = require('../routes/sogo');
+    const app = createAppForRoute('/sogo', sogo);
+    await request(app).get('/sogo/SOGo/so/').expect(200);
+    expect(captured.options.target).toBe('https://sogo.example.com');
+  });
+
+  test('XWiki route (/wiki) proxies with xwiki target and keeps an onAuth hook', async () => {
+    const logger = {
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+    };
+    const { captured } = loadWithConfig(
+      {
+        xwiki: { enabled: true, url: 'https://wiki.example.com', session_storage_key: 'xwiki_access_token' },
+        corsOptions: { origin: '.*' },
+        logLevel: 'silent',
+      },
+      { logger },
+    );
+    const wiki = require('../routes/wiki');
+    const app = createAppForRoute('/wiki', wiki);
+    await request(app).get('/wiki/bin/view/Main/').expect(200);
+    expect(captured.options.target).toBe('https://wiki.example.com');
+    expect(typeof captured.options.onProxyReq).toBe('function');
+
+    // Routing a proxied request with an appSession token invokes the xwiki
+    // specific onAuth debug hook.
+    const proxyReq = { setHeader: jest.fn() };
+    captured.options.onProxyReq(proxyReq, {
+      appSession: { xwiki_access_token: 'xt' },
+    });
+    expect(logger.debug).toHaveBeenCalled();
+  });
+
+  test('Nordeck route (/nob) proxies TLS-insecure with nordeck target and matrix session key', async () => {
+    const { captured } = loadWithConfig({
+      nordeck: { url: 'https://nob.example.com' },
+      matrix: { enabled: true, session_storage_key: 'matrix_access_token' },
+      corsOptions: { origin: '.*' },
+      logLevel: 'silent',
+    });
+    const nob = require('../routes/nob');
+    const app = createAppForRoute('/nob', nob);
+    await request(app).get('/nob/').expect(200);
+    expect(captured.options.target).toBe('https://nob.example.com');
+    expect(captured.options.secure).toBe(false);
+    expect(captured.options.pathRewrite).toEqual({ '^/nob': '' });
+  });
+
+  test('Portal route (/navigation.json) proxies with rewritten path and no bearer auth', async () => {
+    const { captured } = loadWithConfig({
+      portal: { url: 'https://portal.example.com', session_storage_key: 'portal_access_token', secret: 'portalsecret' },
+      usernameClaim: 'preferred_username',
+      corsOptions: { origin: '.*' },
+      logLevel: 'silent',
+    });
+    const navigation = require('../routes/navigation');
+    const app = createAppForRoute('/navigation.json', navigation);
+    await request(app).get('/navigation.json').expect(200);
+    expect(captured.options.target).toBe('https://portal.example.com');
+    expect(captured.options.pathRewrite).toEqual({
+      '^/navigation.json': '/univention/portal/navigation.json',
+    });
+  });
+
+  test('Portal route (/navigation.json) sets Basic auth from the id_token username claim', async () => {
+    const logErrors = [];
+    const { captured } = loadWithConfig(
+      {
+        portal: { url: 'https://portal.example.com', session_storage_key: 'portal_access_token', secret: 'portalsecret' },
+        usernameClaim: 'preferred_username',
+        corsOptions: { origin: '.*' },
+        logLevel: 'silent',
+      },
+      {
+        logger: { info: jest.fn(), error: (...a) => logErrors.push(a), warn: jest.fn(), debug: jest.fn() },
+      },
+    );
+    const navigation = require('../routes/navigation');
+    const app = createAppForRoute('/navigation.json', navigation);
+    await request(app).get('/navigation.json').expect(200);
+
+    const proxyReq = { setHeader: jest.fn() };
+    // claim present -> Basic header derived from username + portal secret
+    captured.options.onProxyReq(proxyReq, { decodedIdToken: { preferred_username: 'alice' } });
+    expect(proxyReq.setHeader).toHaveBeenCalledWith(
+      'Authorization',
+      'Basic ' + Buffer.from('alice:portalsecret').toString('base64'),
+    );
+    expect(logErrors.length).toBe(0);
+
+    // claim missing -> logs an error, no header
+    proxyReq.setHeader.mockClear();
+    captured.options.onProxyReq(proxyReq, {});
+    expect(proxyReq.setHeader).toHaveBeenCalledTimes(0);
+    expect(logErrors.length).toBeGreaterThan(0);
   });
 });

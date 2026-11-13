@@ -3,10 +3,10 @@
 ---
 image:
   repository: n8nio/n8n
-  tag: latest
+  tag: latest@sha256:b4b90747b81fcda7e76550c0d3aa7f0f64917a1e9573cff40d6834eaf2e0f8ea
 
 config:
-  host: n8n.opendesk.example.com
+  host: n8n.example.org
   encryptionKey: {{ .Values.secrets.n8n.encryptionKey | quote }}
   dbType: sqlite
 

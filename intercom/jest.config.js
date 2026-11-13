@@ -6,6 +6,8 @@ module.exports = {
   collectCoverageFrom: [
     'config/**/*.js',
     'routes/**/*.js',
+    'middlewares/**/*.js',
+    '!middlewares/index.js',
     'utils/**/*.js',
     '!utils/keys.js',
     '!utils/redis.js',

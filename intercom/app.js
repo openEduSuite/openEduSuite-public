@@ -9,6 +9,7 @@
 /*
  * Simple Backend for the Browser: OIDC Login, some Methods to call
  */
+/* global process */
 require("dotenv").config({ path: "./.env.prod" });
 const express = require("express");
 var app = express();
@@ -46,6 +47,8 @@ const {
   JWKS,
   redisStore,
   logger,
+  metricsMiddleware,
+  metricsHandler,
 } = require("./utils");
 
 const {
@@ -96,7 +99,7 @@ app.use(
         transient: enableSessionCookie,
       },
     },
-    afterCallback: async (req, res, session, decodedState) => {
+    afterCallback: async (req, res, session) => {
       try {
         var ret = {};
 
@@ -173,6 +176,7 @@ app.use(
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
+app.use(metricsMiddleware);
 app.use(csrfProtection);
 app.use(updateSessionState);
 
@@ -186,6 +190,10 @@ app.get("/", function (req, res) {
 app.get("/health", function (req, res) {
   res.json({ status: "ok" });
 });
+
+// Prometheus metrics — kept public and before auth so the monitoring stack
+// can scrape it without a user session (mirrors the open /health endpoint).
+app.get("/metrics", metricsHandler);
 
 /**
  * @name /backchannel-logout
