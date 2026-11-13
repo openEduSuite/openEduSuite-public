@@ -37,7 +37,17 @@
     "statCategories_many": "{{count}} 个类别",
     "statCategories_other": "{{count}} 个类别",
     "statCategories_one": "{{count}} 个类别",
-    "themeToggleLabel": "切换深色模式"
+    "themeToggleLabel": "切换深色模式",
+    "overview": {
+      "expand": "放大",
+      "collapse": "缩小",
+      "hint": "拖动旋转 · 滚轮缩放 · 点击打开服务",
+      "reset": "重置视图",
+      "monument": "openEduSuite — 概览"
+    },
+    "viewLabel": "视图",
+    "viewTiles": "磁贴",
+    "view3d": "3D 视图"
   },
   "category": {
     "identity": "身份与访问",
@@ -45,7 +55,8 @@
     "productivity": "生产力",
     "knowledge": "知识",
     "development": "开发与 AI",
-    "infrastructure": "基础设施"
+    "infrastructure": "基础设施",
+    "staff": "管理与支持"
   },
   "status": {
     "sso": "SSO"
@@ -170,6 +181,66 @@
     "personenverzeichnis": {
       "name": "人员目录",
       "description": "员工目录 (LDAP)。"
+    },
+    "bbb-internal": {
+      "name": "BigBlueButton（内部）",
+      "description": "openEduSuite 自有的 BigBlueButton 实例（k3s）- 视频会议和在线会议。"
+    },
+    "openscience": {
+      "name": "OpenScience",
+      "description": "AI 研究工作台 — 在浏览器中运行智能体、工具与数据工作流。"
+    },
+    "f13": {
+      "name": "F13",
+      "description": "AI 辅助平台 — 聊天、摘要、RAG 与转写，集成 Keycloak SSO。"
+    },
+    "searchPlaceholder": "筛选服务…",
+    "filterReset": "重置筛选",
+    "zoneReset": "离开“{{zone}}”区域",
+    "serviceReset": "取消高亮服务“{{service}}”"
+  },
+  "vmRequest": {
+    "title": "自助订购虚拟机",
+    "subtitle": "为教学和学习申请虚拟机 — 由机构按月计费。",
+    "disabled": "虚拟机自助服务当前未启用。",
+    "loadFailed": "无法加载虚拟机目录，请稍后重试。",
+    "product": "产品",
+    "perMonth": "月",
+    "manualProvision": "需人工审批",
+    "size": "规格",
+    "duration": "时长",
+    "purpose": "用途",
+    "purposePlaceholder": "这台虚拟机用于什么？",
+    "userId": "用户名",
+    "mail": "邮箱",
+    "submit": "提交申请",
+    "sending": "正在发送 …",
+    "submitted": "申请已提交（参考号：{{ref}}）。虚拟机就绪后您将收到通知。",
+    "submitFailed": "提交失败，请稍后重试。",
+    "month": "月",
+    "months": "个月",
+    "engine": "引擎：{{engine}}"
+  },
+  "writer": {
+    "title": "AI 写作角色",
+    "subtitle": "用于 AI 辅助文本的写作角色：角色定位、语气与规则均为经过校验的配置 – 不连接任何 LLM。",
+    "selectLabel": "角色",
+    "role": "角色定位",
+    "tone": "语气与风格",
+    "rules": "写作规则",
+    "example": "示例文本",
+    "personas": {
+      "cioRedakteur": "CIO 编辑（决策者）",
+      "studierendenService": "学生服务",
+      "didaktik": "教学设计",
+      "oeffentlichkeit": "公共关系"
     }
+  },
+  "home": {},
+  "landscape": {
+    "decisionNavLabel": "决策层",
+    "navLandscape": "IT 全景",
+    "navIntegrationen": "自研集成",
+    "navWriter": "AI 写作"
   }
 }

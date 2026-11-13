@@ -37,7 +37,17 @@
     "statCategories_other": "{{count}} Kategorien",
     "statCategories_many": "{{count}} Kategorien",
     "statCategories": "{{count}} Kategorien",
-    "themeToggleLabel": "Dunkelmodus umschalten"
+    "themeToggleLabel": "Dunkelmodus umschalten",
+    "overview": {
+      "expand": "Vergrößern",
+      "collapse": "Verkleinern",
+      "hint": "Ziehen zum Drehen · Scrollen zum Zoomen · Klick öffnet einen Dienst",
+      "reset": "Zur Übersicht",
+      "monument": "openEduSuite — Übersicht"
+    },
+    "viewLabel": "Ansicht",
+    "viewTiles": "Kacheln",
+    "view3d": "3D-Ansicht"
   },
   "category": {
     "identity": "Identität & Zugriff",
@@ -45,7 +55,8 @@
     "productivity": "Produktivität",
     "knowledge": "Wissen",
     "development": "Entwicklung & KI",
-    "infrastructure": "Infrastruktur"
+    "infrastructure": "Infrastruktur",
+    "staff": "Verwaltung & Support"
   },
   "status": {
     "sso": "SSO"
@@ -170,6 +181,66 @@
     "personenverzeichnis": {
       "name": "Personenverzeichnis",
       "description": "Mitarbeiterverzeichnis (LDAP)."
+    },
+    "bbb-internal": {
+      "name": "BigBlueButton (intern)",
+      "description": "Eigene BigBlueButton-Instanz der openEduSuite (k3s) - Videokonferenzen und Online-Treffen."
+    },
+    "openscience": {
+      "name": "OpenScience",
+      "description": "KI-Forschungswerkbank — Agents, Tools und Daten-Workflows direkt im Browser."
+    },
+    "f13": {
+      "name": "F13",
+      "description": "KI-Assistenzplattform — Chat, Zusammenfassung, RAG und Transkription mit Keycloak-SSO."
+    },
+    "searchPlaceholder": "Dienste filtern …",
+    "filterReset": "Filter zurücksetzen",
+    "zoneReset": "Zone „{{zone}}“ verlassen",
+    "serviceReset": "Dienst „{{service}}“ nicht mehr hervorheben"
+  },
+  "vmRequest": {
+    "title": "VM im Selbstbedienung bestellen",
+    "subtitle": "Bestelle eine virtuelle Maschine für Lehre und Studium — Abrechnung erfolgt monatlich über die Einrichtung.",
+    "disabled": "VM-Selbstbedienung ist derzeit nicht freigeschaltet.",
+    "loadFailed": "Der VM-Katalog konnte nicht geladen werden. Bitte später erneut versuchen.",
+    "product": "Produkt",
+    "perMonth": "Monat",
+    "manualProvision": "manuelle Freigabe",
+    "size": "Größe",
+    "duration": "Laufzeit",
+    "purpose": "Verwendungszweck",
+    "purposePlaceholder": "Wofür wird die VM benötigt? (z. B. „Praktikum Datenbanken“)",
+    "userId": "Benutzerkennung",
+    "mail": "E-Mail",
+    "submit": "Anfrage absenden",
+    "sending": "Wird gesendet …",
+    "submitted": "Anfrage übermittelt (Referenz: {{ref}}). Du erhältst eine Bestätigung, sobald die VM bereit ist.",
+    "submitFailed": "Die Anfrage konnte nicht übermittelt werden. Bitte später erneut versuchen.",
+    "month": "Monat",
+    "months": "Monate",
+    "engine": "Engine: {{engine}}"
+  },
+  "writer": {
+    "title": "AI-Writer-Personas",
+    "subtitle": "Schreib-Personas für KI-gestützte Texte: Rolle, Stimme und Regeln als geprüfte Konfiguration – ohne LLM-Anbindung.",
+    "selectLabel": "Persona",
+    "role": "Rolle",
+    "tone": "Stimme & Ton",
+    "rules": "Regeln",
+    "example": "Beispieltext",
+    "personas": {
+      "cioRedakteur": "CIO-Redakteur (Entscheider)",
+      "studierendenService": "Studierenden-Service",
+      "didaktik": "Didaktik",
+      "oeffentlichkeit": "Öffentlichkeitsarbeit"
     }
+  },
+  "home": {},
+  "landscape": {
+    "decisionNavLabel": "Entscheiderebene",
+    "navLandscape": "IT-Landscape",
+    "navIntegrationen": "Eigenentwicklungen",
+    "navWriter": "AI-Writer"
   }
 }

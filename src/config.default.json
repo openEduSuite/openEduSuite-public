@@ -115,5 +115,52 @@
       "ssoEnabled": true,
       "icon": "📧"
     }
-  ]
+  ],
+  "vmRequest": {
+    "enabled": true,
+    "catalogUrl": "/config/vm-catalog.json",
+    "engineWebhook": "/api/vm-workflow-engine"
+  },
+  "widgets": {
+    "weather": {
+      "enabled": false,
+      "src": "",
+      "title": "ui.weather"
+    },
+    "news": {
+      "enabled": true,
+      "feeds": [
+        {
+          "id": "news",
+          "title": "ui.news",
+          "path": "/news",
+          "max": 8
+        },
+        {
+          "id": "events",
+          "title": "ui.events",
+          "path": "/events",
+          "max": 5
+        },
+        {
+          "id": "hrz",
+          "title": "ui.hrz",
+          "path": "/hrz",
+          "max": 5
+        },
+        {
+          "id": "ub",
+          "title": "ui.ub",
+          "path": "/ub",
+          "max": 5
+        },
+        {
+          "id": "kalender",
+          "title": "ui.kalender",
+          "path": "/kalender",
+          "max": 5
+        }
+      ]
+    }
+  }
 }

@@ -37,7 +37,17 @@
     "statCategories_other": "{{count}} categories",
     "statCategories_many": "{{count}} categories",
     "statCategories": "{{count}} categories",
-    "themeToggleLabel": "Toggle dark mode"
+    "themeToggleLabel": "Toggle dark mode",
+    "overview": {
+      "expand": "Enlarge",
+      "collapse": "Shrink",
+      "hint": "Drag to rotate · Scroll to zoom · Click to open a service",
+      "reset": "Reset view",
+      "monument": "openEduSuite — overview"
+    },
+    "viewLabel": "View",
+    "viewTiles": "Tiles",
+    "view3d": "3D view"
   },
   "category": {
     "identity": "Identity & Access",
@@ -45,7 +55,8 @@
     "productivity": "Productivity",
     "knowledge": "Knowledge",
     "development": "Development & AI",
-    "infrastructure": "Infrastructure"
+    "infrastructure": "Infrastructure",
+    "staff": "Administration & Support"
   },
   "status": {
     "sso": "SSO"
@@ -170,6 +181,66 @@
     "personenverzeichnis": {
       "name": "Directory of persons",
       "description": "Staff directory (LDAP)."
+    },
+    "bbb-internal": {
+      "name": "BigBlueButton (internal)",
+      "description": "openEduSuite's own BigBlueButton instance (k3s) - video conferencing and online meetings."
+    },
+    "openscience": {
+      "name": "OpenScience",
+      "description": "AI research workbench — run agents, tools and data workflows in your browser."
+    },
+    "f13": {
+      "name": "F13",
+      "description": "KI assistance platform — chat, summarization, RAG and transcription with Keycloak SSO."
+    },
+    "searchPlaceholder": "Filter services…",
+    "filterReset": "Reset filter",
+    "zoneReset": "Leave zone “{{zone}}”",
+    "serviceReset": "Stop highlighting service “{{service}}”"
+  },
+  "vmRequest": {
+    "title": "Order a virtual machine (self-service)",
+    "subtitle": "Request a VM for teaching and study — billed monthly by the institution.",
+    "disabled": "VM self-service is currently not enabled.",
+    "loadFailed": "The VM catalog could not be loaded. Please try again later.",
+    "product": "Product",
+    "perMonth": "month",
+    "manualProvision": "manual approval required",
+    "size": "Size",
+    "duration": "Duration",
+    "purpose": "Purpose",
+    "purposePlaceholder": "What is the VM for? (e.g. “databases lab”)",
+    "userId": "User ID",
+    "mail": "E-mail",
+    "submit": "Send request",
+    "sending": "Sending …",
+    "submitted": "Request submitted (reference: {{ref}}). You will be notified as soon as the VM is ready.",
+    "submitFailed": "The request could not be submitted. Please try again later.",
+    "month": "month",
+    "months": "months",
+    "engine": "Engine: {{engine}}"
+  },
+  "writer": {
+    "title": "AI writer personas",
+    "subtitle": "Writing personas for AI-assisted texts: role, voice and rules as a validated configuration – without any LLM integration.",
+    "selectLabel": "Persona",
+    "role": "Role",
+    "tone": "Voice & tone",
+    "rules": "Rules",
+    "example": "Example text",
+    "personas": {
+      "cioRedakteur": "CIO editor (decision-maker)",
+      "studierendenService": "Student services",
+      "didaktik": "Didactics",
+      "oeffentlichkeit": "Public relations"
     }
+  },
+  "home": {},
+  "landscape": {
+    "decisionNavLabel": "Decision level",
+    "navLandscape": "IT landscape",
+    "navIntegrationen": "Custom integrations",
+    "navWriter": "AI writer"
   }
 }

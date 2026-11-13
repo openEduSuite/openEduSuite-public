@@ -37,7 +37,17 @@
     "statCategories_other": "{{count}} catégories",
     "statCategories_many": "{{count}} catégories",
     "statCategories": "{{count}} catégories",
-    "themeToggleLabel": "Basculer le mode sombre"
+    "themeToggleLabel": "Basculer le mode sombre",
+    "overview": {
+      "expand": "Agrandir",
+      "collapse": "Réduire",
+      "hint": "Faites glisser pour tourner · Molette pour zoomer · Cliquez pour ouvrir un service",
+      "reset": "Réinitialiser la vue",
+      "monument": "openEduSuite — vue d’ensemble"
+    },
+    "viewLabel": "Affichage",
+    "viewTiles": "Tuiles",
+    "view3d": "Vue 3D"
   },
   "category": {
     "identity": "Identité et accès",
@@ -45,7 +55,8 @@
     "productivity": "Productivité",
     "knowledge": "Savoirs",
     "development": "Développement et IA",
-    "infrastructure": "Infrastructure"
+    "infrastructure": "Infrastructure",
+    "staff": "Administration et support"
   },
   "status": {
     "sso": "SSO"
@@ -170,6 +181,66 @@
     "personenverzeichnis": {
       "name": "Annuaire des personnes",
       "description": "Annuaire du personnel (LDAP)."
+    },
+    "bbb-internal": {
+      "name": "BigBlueButton (interne)",
+      "description": "Instance BigBlueButton propre a openEduSuite (k3s) - visioconferences et reunions en ligne."
+    },
+    "openscience": {
+      "name": "OpenScience",
+      "description": "Poste de travail de recherche IA — agents, outils et workflows de données dans votre navigateur."
+    },
+    "f13": {
+      "name": "F13",
+      "description": "Plateforme d'assistance IA — chat, synthèse, RAG et transcription avec SSO Keycloak."
+    },
+    "searchPlaceholder": "Filtrer les services…",
+    "filterReset": "Réinitialiser le filtre",
+    "zoneReset": "Quitter la zone « {{zone}} »",
+    "serviceReset": "Ne plus mettre en valeur le service « {{service}} »"
+  },
+  "vmRequest": {
+    "title": "Commander une machine virtuelle (libre-service)",
+    "subtitle": "Demandez une VM pour l'enseignement et l'étude — facturation mensuelle par l'institution.",
+    "disabled": "Le libre-service VM n'est pas activé pour le moment.",
+    "loadFailed": "Impossible de charger le catalogue de VM. Réessayez plus tard.",
+    "product": "Produit",
+    "perMonth": "mois",
+    "manualProvision": "approbation manuelle requise",
+    "size": "Taille",
+    "duration": "Durée",
+    "purpose": "Objet",
+    "purposePlaceholder": "À quoi sert la VM ? (ex. « TP bases de données »)",
+    "userId": "Identifiant",
+    "mail": "E-mail",
+    "submit": "Envoyer la demande",
+    "sending": "Envoi en cours …",
+    "submitted": "Demande envoyée (référence : {{ref}}). Vous serez prévenu dès que la VM sera prête.",
+    "submitFailed": "La demande n'a pas pu être envoyée. Réessayez plus tard.",
+    "month": "mois",
+    "months": "mois",
+    "engine": "Moteur : {{engine}}"
+  },
+  "writer": {
+    "title": "Personas de rédaction IA",
+    "subtitle": "Personas de rédaction pour des textes assistés par IA : rôle, voix et règles comme configuration validée – sans connexion LLM.",
+    "selectLabel": "Persona",
+    "role": "Rôle",
+    "tone": "Voix et ton",
+    "rules": "Règles",
+    "example": "Texte d'exemple",
+    "personas": {
+      "cioRedakteur": "Rédacteur CIO (décideur)",
+      "studierendenService": "Service aux étudiants",
+      "didaktik": "Pédagogie",
+      "oeffentlichkeit": "Relations publiques"
     }
+  },
+  "home": {},
+  "landscape": {
+    "decisionNavLabel": "Niveau décisionnel",
+    "navLandscape": "Paysage IT",
+    "navIntegrationen": "Développements propres",
+    "navWriter": "Rédacteur IA"
   }
 }

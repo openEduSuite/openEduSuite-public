@@ -52,6 +52,8 @@ public variants replace them systematically:
 | `registry.gitlab.com/<org>/opendesk-kubectl` | `registry.example.com/opendesk/kubectl` |
 | Internal LDAP DN `dc=swp-ldap,dc=internal`, `ums-ldap-server-primary` | `dc=example,dc=org`, `ldap` |
 | Internal IP allowlists (e.g. `192.168.3.201`) | `192.0.2.10` (RFC 5737 TEST-NET-1) |
+| Internal cluster registry IPs (`172.25.*`) | `192.0.2.11` (RFC 5737 TEST-NET-1) |
+| Personal image handles in operator notes (e.g. `weissto/sogo`) | generic image name (`sogo`) |
 | Dev passwords (`sogo-password`, `sogo-ldap-password`) | `CHANGEME` |
 | Hardcoded HRZ apt egress proxy in the SOGo entrypoint | removed — now opt-in via `sogo.aptProxy` |
 
