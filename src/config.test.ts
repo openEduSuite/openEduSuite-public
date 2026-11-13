@@ -29,7 +29,7 @@ describe('portal runtime config (portable image, deployment-specific override)',
   it('default config ships a complete, translatable catalog', () => {
     const ids = [...DEFAULT_CONFIG.services, ...DEFAULT_CONFIG.staffServices].map((s) => s.id);
     expect(ids).toEqual([
-      'keycloak', 'element', 'bbb', 'opencloud', 'nextcloud', 'sogo', 'openproject',
+      'keycloak', 'element', 'bbb', 'bbb-internal', 'opencloud', 'nextcloud', 'sogo', 'openproject',
       'xwiki', 'open-webui', 'argocd', 'sogo-staff', 'xwiki-staff', 'sogo-students',
     ]);
     for (const s of [...DEFAULT_CONFIG.services, ...DEFAULT_CONFIG.staffServices]) {
