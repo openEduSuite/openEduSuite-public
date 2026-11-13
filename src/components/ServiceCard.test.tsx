@@ -39,13 +39,11 @@ describe('ServiceCard', () => {
     expect(screen.queryByText('Geplant')).not.toBeInTheDocument();
   });
 
-  it('shows the SSO badge only for ssoEnabled services', async () => {
+  it('renders no SSO indicator at all (SSO is universal for every catalog app)', async () => {
+    // The blue SSO badges were removed — SSO availability is enforced by the
+    // per-app blackbox tests (tests/sso/pw/pw-*-sso.mjs + check-sso-matrix.mjs),
+    // not signalled per tile.
     renderAt();
-    expect(screen.getByText('SSO')).toBeInTheDocument();
-  });
-
-  it('omits the SSO badge for non-SSO services', () => {
-    render(<I18nextProvider i18n={i18n}><ServiceCard service={{ ...fixture, ssoEnabled: false }} /></I18nextProvider>);
     expect(screen.queryByText('SSO')).not.toBeInTheDocument();
   });
 
@@ -54,7 +52,6 @@ describe('ServiceCard', () => {
     expect(screen.getByText(/Single-Sign-On-Identitätsanbieter/)).toBeInTheDocument();
     await i18n.changeLanguage('fr');
     expect(screen.getByText(/Fournisseur d'identité Single Sign-On/)).toBeInTheDocument();
-    expect(screen.getByText('SSO')).toBeInTheDocument();
   });
 
   it('keeps brand names identical across locales', async () => {

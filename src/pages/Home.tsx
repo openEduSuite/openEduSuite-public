@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getConfig } from '../config';
+import { getConfig, type PortalService } from '../config';
 import ServiceCard from '../components/ServiceCard';
 import WeatherWidget from '../components/WeatherWidget';
 import NewsFeeds from '../components/NewsFeeds';
+import OverviewScene from '../components/overview3d/OverviewScene';
+import { useFilterState } from '../lib/useFilterState';
+import type { PortalView } from '../lib/filter';
+import { usePortalAuth } from '../lib/portalAuth';
 import { useTheme } from '../useTheme';
 
 const categories = [
@@ -15,6 +20,32 @@ const categories = [
   { key: 'infrastructure' as const, icon: '🛠️' },
 ];
 
+/**
+ * Kachel-Wrapper für das `?service=<katalog-id>`-Deeplink-Ziel (T-PRS-06/07):
+ * trägt `data-service-id` als Scroll-Ziel und hebt die Kachel des aktiven
+ * Dienst-Deeplinks visuell hervor (Ring). Ohne Deeplink transparent.
+ */
+function ServiceTile({
+  service,
+  highlighted,
+}: {
+  service: PortalService;
+  highlighted: boolean;
+}) {
+  return (
+    <div
+      data-service-tile={service.id}
+      className={
+        highlighted
+          ? 'rounded-2xl ring-4 ring-blue-500/80 shadow-lg transition-shadow'
+          : ''
+      }
+    >
+      <ServiceCard service={service} />
+    </div>
+  );
+}
+
 function Home() {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
@@ -23,6 +54,69 @@ function Home() {
   const { services, staffServices, layout, widgets } = cfg;
   const byId = new Map(services.concat(staffServices).map((s) => [s.id, s]));
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const { filter, push } = useFilterState();
+  const { isAdmin } = usePortalAuth();
+  const activeZone = filter.zone;
+  const activeService = filter.service;
+  const q = (filter.q ?? '').trim().toLowerCase();
+  // `view` (Filter-Contract) entscheidet die Oberfläche: `services` = Kacheln
+  // (Default), `workplace` = 3D-Ansicht für Eingeloggte. Teilbar/refresh-stabil
+  // über ?view=services|workplace (Strom F / T-PRS-06).
+  const view: PortalView = filter.view ?? 'services';
+  const setView = (v: PortalView) => push({ ...filter, view: v });
+
+  /** q-Filter auf einen Dienst (id/Kategorie-Substring). */
+  const matchesQ = (s: { id: string; category?: string }) =>
+    !q || s.id.toLowerCase().includes(q) || (s.category ?? '').toLowerCase().includes(q);
+
+  /** Sanft zu einer Zonen-/Sections-Spalte scrollen (trotz Sticky-Header). */
+  const scrollToZone = (zoneId: string) => {
+    requestAnimationFrame(() => {
+      try {
+        document
+          .querySelector(`[data-zoneid="${CSS.escape(zoneId)}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch {
+        /* jsdom ohne scrollIntoView — ignorieren */
+      }
+    });
+  };
+
+  /** Sanft zum Dienstkachel eines `service=`-Deeplinks scrollen (T-PRS-06/07).
+   * Selektor bewusst getrennt von den Landscape-Listen (`data-service-id`):
+   * `data-service-tile` existiert nur auf den Startseiten-Kacheln. */
+  const scrollToService = (serviceId: string) => {
+    requestAnimationFrame(() => {
+      try {
+        document
+          .querySelector(`[data-service-tile="${CSS.escape(serviceId)}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch {
+        /* jsdom ohne scrollIntoView — ignorieren */
+      }
+    });
+  };
+
+  /** Zonen-Station in der 3D-Szene => Deeplink-Filter setzen + scrollen (Strom F). */
+  const handleZoneSelect = (zoneId: string) => {
+    push({ view: 'services', zone: zoneId });
+    scrollToZone(zoneId);
+  };
+
+  // Deeplink `?view=services&zone=…`: nach dem Laden/Auth-Übergang scrollen.
+  useEffect(() => {
+    if (authed === true && filter.zone) scrollToZone(filter.zone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, filter.zone]);
+
+  // Deeplink `?service=<katalog-id>` (T-PRS-06-Contract): nach dem Auth-
+  // Übergang zum Dienstkachel scrollen — die Hervorhebung selbst ist rein
+  // deklarativ (activeService), damit Refresh/Teilen denselben Zustand
+  // reproduzieren und die URL unverändert teilbar bleibt.
+  useEffect(() => {
+    if (authed === true && activeService) scrollToService(activeService);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, activeService]);
 
   // The portal runs behind oauth2-proxy; /oauth2/auth answers 200 when a valid
   // session cookie exists, 401 otherwise. One header action follows the real
@@ -106,6 +200,18 @@ function Home() {
                   </svg>
                 )}
               </button>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  data-testid="admin-nav"
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/40 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  {t('ui.adminNav', { defaultValue: 'Administration' })}
+                </Link>
+              )}
               {authed === false && (
                 <a
                   href={cfg.sso.loginUrl}
@@ -143,60 +249,184 @@ function Home() {
         </div>
       </header>
 
-      {/* Hero */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-        <div className="text-center">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100 sm:text-5xl">
-            {t('ui.hero')}
-          </h2>
-          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            {t('ui.heroSub')}
-          </p>
-
-          {/* Projektübersicht (Bird's-Eye) — unter dem Begrüßungstext, gut
-              sichtbar auf der Landing-/Abgemeldet-Ansicht, gewollt:
-              „so people get an idea what the project is about“. */}
-          {authed !== true && (
-            <img
-              src="/brand/birdeye.webp"
-              alt="openEduSuite — Projektübersicht (Bird's-Eye)"
-              className="mt-8 mx-auto max-w-full w-[840px] h-auto rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg"
-            />
-          )}
-
+      {/* Interaktiver 3D-«Arbeitsplatz» (Präsentationsschicht): NUR für
+          anonyme Besucher als Teaser-Einstieg (T-PRS-04) — klickbar (Dienst
+          öffnen / Zonen-Filter) und vergrößerbar (Vollbild). Ohne WebGL
+          automatisches SVG-Fallback. Eingeloggte Nutzer sehen stattdessen das
+          Dienste-Dashboard; während authed === null (Auth-Probe läuft) wird
+          gar nichts gerendert, damit die Szene nicht aufblitzt (kein Flackern). */}
+      {authed === false && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+          <OverviewScene onZoneSelect={handleZoneSelect} className="w-full" />
         </div>
-      </div>
+      )}
+
+      {/* Ansichts-Umschalter Kacheln ↔ 3D (Filter-Contract `view`): nur für
+          eingeloggte Nutzer:innen — anonym bleibt es beim 3D-Teaser. Default
+          sind die Dienstkacheln (?view=services), die 3D-Ansicht ist per
+          ?view=workplace teilbar und refresh-stabil (T-PRS-06). */}
+      {authed === true && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <div
+            data-testid="view-toggle"
+            role="group"
+            aria-label={t('ui.viewLabel')}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/60 p-1"
+          >
+            <button
+              type="button"
+              data-testid="view-tiles"
+              aria-pressed={view === 'services'}
+              onClick={() => setView('services')}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                view === 'services'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              🧩 {t('ui.viewTiles')}
+            </button>
+            <button
+              type="button"
+              data-testid="view-3d"
+              aria-pressed={view === 'workplace'}
+              onClick={() => setView('workplace')}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                view === 'workplace'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              🌐 {t('ui.view3d')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3D-Arbeitsplatz-Ansicht für eingeloggte Nutzer:innen
+          (?view=workplace): dieselbe interaktive Szene wie im anonymen Teaser,
+          jetzt als vollwertige Arbeitsplatz-Ansicht — Zonen-Klick springt
+          zurück zu den Kacheln (handleZoneSelect setzt view=services). */}
+      {authed === true && view === 'workplace' && (
+        <section
+          data-testid="workplace-3d"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4"
+        >
+          <OverviewScene onZoneSelect={handleZoneSelect} className="w-full" />
+        </section>
+      )}
+
+      {/* Entscheider-Navigation ist aus dem Dashboard entfernt: Entscheiderebene
+          und IT-Landschaft leben ausschließlich unter /landscape (ohne
+          Vergleich — der Vergleich ist eine eigene Seite der Marketing-Präsenz). */}
+
+      {/* Such-/Filterleiste (Strom F: URL-Filter `q` + `zone`) — nur in der
+          Kachel-Ansicht (view=services) und nur eingeloggt. */}
+      {authed === true && view === 'services' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center gap-3">
+          <label className="sr-only" htmlFor="service-search">
+            {t('services.searchPlaceholder')}
+          </label>
+          <input
+            id="service-search"
+            data-testid="service-search"
+            type="search"
+            value={q}
+            onChange={(e) => push({ ...filter, q: e.target.value || undefined })}
+            placeholder={t('services.searchPlaceholder')}
+            className="w-64 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {q && (
+            <button
+              type="button"
+              data-testid="filter-reset-q"
+              onClick={() => push({ ...filter, q: undefined })}
+              className="rounded-lg bg-gray-200 dark:bg-gray-700 px-3 py-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-600"
+            >
+              ✕ {t('services.filterReset')}
+            </button>
+          )}
+          {activeZone && (
+            <button
+              type="button"
+              data-testid="filter-reset-zone"
+              onClick={() => push({ ...filter, zone: undefined, view: undefined })}
+              className="rounded-lg bg-blue-100 dark:bg-blue-900/50 px-3 py-2 text-sm text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800/60"
+            >
+              ✕ {t('services.zoneReset', { zone: activeZone })}
+            </button>
+          )}
+          {activeService && (
+            <button
+              type="button"
+              data-testid="filter-reset-service"
+              onClick={() => push({ ...filter, service: undefined })}
+              className="rounded-lg bg-blue-100 dark:bg-blue-900/50 px-3 py-2 text-sm text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800/60"
+            >
+              ✕ {t('services.serviceReset', { service: activeService })}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Service Grid — full width so tiles span the whole page.
           Tiles (and widgets) render only for authenticated visitors: while
           signed out the portal is a plain landing page with the login CTA. */}
-      <div className="px-4 sm:px-6 lg:px-8 pb-16 w-full">
-        {authed === true && (layoutSections
-          ? layoutSections.map((sec) => (
-              <section key={sec.id} className="mb-10" data-testid={`section-${sec.id}`}>
+      <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-16 w-full">
+        {authed === true && view === 'services' && (layoutSections
+          ? layoutSections.map((sec) => {
+              const zoneId = sec.services[0]?.category || sec.id;
+              const visible = sec.services.filter((s) => matchesQ(s));
+              if (visible.length === 0) return null;
+              return (
+              <section
+                key={sec.id}
+                className={`mb-10 scroll-mt-20 rounded-2xl p-4 transition-shadow ${
+                  activeZone && (activeZone === sec.id || activeZone === zoneId)
+                    ? 'ring-2 ring-blue-500/70 shadow-lg'
+                    : ''
+                }`}
+                data-testid={`section-${sec.id}`}
+                data-zoneid={zoneId}
+              >
                 <div className="flex items-center gap-2 mb-4">
                   {sec.icon && <span className="text-xl">{sec.icon}</span>}
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t(sec.title)}</h3>
                 </div>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-                  {sec.services.map((service) => (
-                    <ServiceCard key={service.id} service={service} />
+                  {visible.map((service) => (
+                    <ServiceTile
+                      key={service.id}
+                      service={service}
+                      highlighted={activeService === service.id}
+                    />
                   ))}
                 </div>
               </section>
-            ))
+              );
+            })
           : categories.map((cat) => {
-              const filtered = services.filter((s) => s.category === cat.key);
+              const filtered = services.filter((s) => s.category === cat.key && matchesQ(s));
               if (filtered.length === 0) return null;
               return (
-                <section key={cat.key} className="mb-10">
+                <section
+                  key={cat.key}
+                  className={`mb-10 scroll-mt-20 rounded-2xl p-4 transition-shadow ${
+                    activeZone === cat.key ? 'ring-2 ring-blue-500/70 shadow-lg' : ''
+                  }`}
+                  data-zoneid={cat.key}
+                >
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-xl">{cat.icon}</span>
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">{t(`category.${cat.key}`)}</h3>
                   </div>
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
                     {filtered.map((service) => (
-                      <ServiceCard key={service.id} service={service} />
+                      <ServiceTile
+                        key={service.id}
+                        service={service}
+                        highlighted={activeService === service.id}
+                      />
                     ))}
                   </div>
                 </section>
@@ -212,14 +442,20 @@ function Home() {
             </div>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
               {remainingStaff.map((service) => (
-                <ServiceCard key={service.id} service={service} />
+                <ServiceTile
+                  key={service.id}
+                  service={service}
+                  highlighted={activeService === service.id}
+                />
               ))}
             </div>
           </section>
         )}
 
-        {/* Widgets: weather + university news feeds — one flow, classic minmax(340px) layout */}
-        {authed === true && widgets && (
+        {/* Widgets: weather + university news feeds + Kalender — one flow,
+            classic minmax(340px) layout. Für JEDEN Besucher sichtbar (auch
+            abgemeldet): Feeds sind öffentliche Uni-Quellen, keine Dienste. */}
+        {widgets && (
           <section className="mb-10" data-testid="widgets-row">
             <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-6">
               {widgets.weather?.enabled && (

@@ -8,11 +8,20 @@
 #   OW-03  WEBUI_SECRET_KEY aus Secret open-webui (scripts/ensure-open-webui-secret.sh).
 # Vertragstest: tests/sso/check-open-webui-hardening.mjs
 ---
+# Pipelines (OW-06): aus — sonst verdrängt der Chart-Default (enabled: true)
+# OPENAI_API_BASE_URL auf den internen Pipelines-Service und unser Ollama-
+# Routing (openaiBaseApiUrl) greift nicht.
+pipelines:
+  enabled: false
 ollama:
   enabled: false
 image:
   # Referenzversion v0.13.3 (2026-11-08) — Digest ermittelt via:
   #   skopeo inspect docker://ghcr.io/open-webui/open-webui:v0.13.3
+  # AKTIV: gepinner ghcr-Digest. Fleet-Spiegel (Nix-Shift, Change
+  # open-webui-nix-shift) erst nach nachgewiesenem Mirror aktivieren:
+  #   repository: 192.0.2.11:5001/openedusuite-nix/open-webui
+  #   tag: "v0.13.3-nix@sha256:46b59158e6558eeb980bc828e0f1b30238ad24d82ed84d5e5eda1dab2a082f14"
   repository: ghcr.io/open-webui/open-webui
   tag: "@sha256:46b59158e6558eeb980bc828e0f1b30238ad24d82ed84d5e5eda1dab2a082f14"
   pullPolicy: IfNotPresent
