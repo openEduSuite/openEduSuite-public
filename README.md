@@ -67,7 +67,7 @@ Key behaviors:
 ## Deployment models
 
 ```
-portal ──(npm/Docker/K8s)──▶              single page, your config
+portal ──(npm/Docker/K8s)──▶              full-featured portal SPA, catalog-driven — adopters pick/trim their service set in config
 platform ──(helmfile)──▶                   all app services, imperative or CI
          ──(ArgoCD)──▶                     GitOps: App-of-Apps + helmfile CMP
          ──(kubara)──▶                     kubara provisions ArgoCD + platform layer
