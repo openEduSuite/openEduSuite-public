@@ -12,12 +12,22 @@
 // `persona` deklarativ an und normiert ihn per `enumOf` auf die aktivierten
 // Registry-IDs. Unbekannte persona-IDs fallen damit weg (Standard-Persona,
 // URL wird korrigiert); fremde Query-Parameter bleiben erhalten.
+//
+// P3-3 (LiteLLM AI-Gateway): Zusätzlich gibt es eine OPTIONALE
+// „Generieren"-Aktion. Sie nutzt ausschließlich den relativen, same-origin
+// Pfad `/api/ai/generate` (`./writerGenerate.ts` → Backend
+// `server/ai-generate.mjs` → LiteLLM). Der System-Prompt kommt aus der
+// Registry (`buildPersonaSystemPrompt`), Keys/URLs des Gateways bleiben
+// serverseitig. Schlägt der Aufruf fehl, wird die Aktion gesperrt und ein
+// Hinweis angezeigt — die Registry-Ansicht (Rolle, Stimme, Regeln, Beispiel)
+// bleibt vollständig ohne LLM nutzbar.
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getEnabledPersonas, type Persona } from '../data/personas';
 import { enumOf, type FilterKeyRule } from '../lib/filter';
 import { useFilterState } from '../lib/useFilterState';
+import { generatePersonaText } from './writerGenerate';
 
 /** Seiten-Anmeldung am URL-Filter-Contract: `?persona=<registry-id>`. */
 const PERSONA_KEY = 'persona';
@@ -51,8 +61,69 @@ function Writer() {
 
   const onChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!e.target.value) return;
+    // Persona-Wechsel: alter Fehler/altes Ergebnis gehoeren zur alten Persona.
+    setFailed(false);
+    setGenerated(null);
     replace({ ...filter, [PERSONA_KEY]: e.target.value });
   };
+
+  // ---- Optionale Generierung via Portal-Backend (/api/ai/generate) -------
+  // Alles hier ist progressiv: Ohne Gateway (oder bei Fehler) bleibt die
+  // Registry-Ansicht unberührt, die Aktion wird gesperrt + Hinweis angezeigt.
+  const [draft, setDraft] = useState('');
+  const [generated, setGenerated] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Laengst laufende Anfrage abbrechen, wenn die Seite verlassen wird.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  const draftReady = draft.trim() !== '';
+  const canGenerate = draftReady && !busy && !failed;
+
+  const onDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDraft(e.target.value);
+    // Neue Eingabe = neuer Versuch erlaubt (Sperr-Hint zuruecksetzen).
+    setFailed(false);
+  };
+
+  const onGenerate = async () => {
+    if (!selected || !canGenerate) return;
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    setBusy(true);
+    setGenerated(null);
+    try {
+      const text = await generatePersonaText({
+        persona: selected,
+        text: draft,
+        signal: controller.signal,
+      });
+      setGenerated(text);
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return;
+      setFailed(true);
+      setGenerated(null);
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setBusy(false);
+      }
+    }
+  };
+
+  const generateHint = failed
+    ? t('writer.generateError', {
+        defaultValue:
+          'Generierung nicht verfügbar — das KI-Gateway ist nicht erreichbar. Passe den Entwurf an, um es erneut zu versuchen.',
+      })
+    : !draftReady
+      ? t('writer.generateEmptyHint', {
+          defaultValue: 'Entwurf eingeben, dann generieren.',
+        })
+      : null;
 
   if (!selected) return null;
 
@@ -68,19 +139,81 @@ function Writer() {
         >
           {t('writer.selectLabel')}
         </label>
-        <select
-          id="writer-persona-select"
-          data-testid="writer-persona-select"
-          value={selected.id}
-          onChange={onChange}
-          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-stretch">
+          <select
+            id="writer-persona-select"
+            data-testid="writer-persona-select"
+            value={selected.id}
+            onChange={onChange}
+            className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 sm:flex-1"
+          >
+            {personas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {t(p.nameKey)}
+              </option>
+            ))}
+          </select>
+          {/* Generieren-Aktion direkt neben der Persona-Auswahl (P3-3). Ohne
+              Gateway/funktionsunfähig: disabled + Hinweis (siehe unten). */}
+          <button
+            type="button"
+            data-testid="writer-generate-button"
+            onClick={onGenerate}
+            disabled={!canGenerate}
+            className="rounded-md bg-slate-900 px-4 py-2 font-medium text-slate-50 transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
+          >
+            {busy
+              ? t('writer.generateBusy', { defaultValue: 'Generiere …' })
+              : t('writer.generate', { defaultValue: 'Generieren' })}
+          </button>
+        </div>
+        {generateHint !== null && (
+          <p
+            data-testid="writer-generate-hint"
+            role={failed ? 'alert' : undefined}
+            className={
+              failed
+                ? 'mt-2 text-sm text-red-700 dark:text-red-400'
+                : 'mt-2 text-sm text-slate-500 dark:text-slate-400'
+            }
+          >
+            {generateHint}
+          </p>
+        )}
+
+        {/* Optionale Generierung: Entwurf + Ergebnis. Der Aufruf laeuft NUR
+            gegen den relativen Pfad /api/ai/generate — keine Gateway-URL und
+            kein Key im SPA (siehe ./writerGenerate.ts). */}
+        <label
+          htmlFor="writer-generate-input"
+          className="mt-5 block text-sm font-medium text-slate-700 dark:text-slate-200"
         >
-          {personas.map((p) => (
-            <option key={p.id} value={p.id}>
-              {t(p.nameKey)}
-            </option>
-          ))}
-        </select>
+          {t('writer.generateInputLabel', { defaultValue: 'Entwurf' })}
+        </label>
+        <textarea
+          id="writer-generate-input"
+          data-testid="writer-generate-input"
+          rows={6}
+          value={draft}
+          onChange={onDraftChange}
+          placeholder={t('writer.generatePlaceholder', {
+            defaultValue: 'Rohtext oder Stichpunkte …',
+          })}
+          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        />
+        {generated !== null && (
+          <div
+            data-testid="writer-generate-result"
+            className="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400">
+              {t('writer.generateResultLabel', { defaultValue: 'Generierter Text' })}
+            </h3>
+            <p className="mt-2 whitespace-pre-wrap text-slate-900 dark:text-slate-100">
+              {generated}
+            </p>
+          </div>
+        )}
       </div>
 
       <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">

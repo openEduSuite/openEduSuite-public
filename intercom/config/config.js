@@ -10,6 +10,22 @@ const issuerBaseUrl =
   process.env.ISSUER_BASE_URL ??
   `${process.env.KEYCLOAK_URL}/auth/realms/${process.env.REALM_NAME}`;
 
+/** Split a comma/space separated env list into trimmed non-empty entries. */
+const parseList = (value) =>
+  String(value ?? "")
+    .split(/[,\s]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+// Human lane rooms (docs/plans/2026-11-13-integration-priorities.md P2b).
+const DEFAULT_AI_ROOMS = [
+  "#ops-alerts",
+  "#edu-lifecycle",
+  "#billing",
+  "#support",
+];
+const aiRooms = parseList(process.env.AI_ROOMS);
+
 const config = {
   corsOptions: {
     methods: "GET,POST,PUT,DELETE,PROPFIND,MKCOL",
@@ -39,6 +55,22 @@ const config = {
   nordeck: {
     url: process.env.NORDECK_URL,
   },
+  // LiteLLM AI gateway (docs/services-llm.md). `key` is the value of secret
+  // `litellm` key `intercom-key` (env LITELLM_KEY) — never a literal in Git.
+  litellm: {
+    url: process.env.LITELLM_URL,
+    model: process.env.LITELLM_MODEL ?? "qwen3-30b",
+    key: process.env.LITELLM_KEY,
+  },
+  // Matrix bot AI summary in the /nob route (docs/services-intercom-ai.md).
+  // Opt-in (default false); `aiRooms` is the allow-list of rooms whose threads
+  // may be summarised after an explicit "!ai" trigger.
+  aiSummaryEnabled: JSON.parse(
+    (process.env.AI_SUMMARY_ENABLED ?? "false").toLowerCase(),
+  ),
+  aiRooms: aiRooms.length ? aiRooms : DEFAULT_AI_ROOMS,
+  aiTrigger: process.env.AI_TRIGGER ?? "!ai",
+  aiMessageLimit: Number.parseInt(process.env.AI_MESSAGE_LIMIT ?? "50", 10),
   portal: {
     url: process.env.PORTAL_URL,
     secret: process.env.PORTAL_API_KEY,

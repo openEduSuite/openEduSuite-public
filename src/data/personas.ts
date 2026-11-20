@@ -9,6 +9,10 @@
 // proposal.md); eine spaetere Schreib-Pipeline (z. B. n8n/LLM) konsumiert
 // nur diese Struktur — siehe docs/ai-writer-personas.md.
 //
+// P3-3: `buildPersonaSystemPrompt` leitet daraus den System-Prompt ab
+// (role + tone + rules) und bleibt damit reine Registry-Logik — kein
+// Netz- und kein Gateway-Zugriff in diesem Modul (siehe pages/writerGenerate).
+//
 // Schema (alle Felder Pflicht, `enabled` steuert die Sichtbarkeit):
 //   id       Slug, eindeutig, ^[a-z0-9]+(-[a-z0-9]+)*$  → Deeplink ?persona=<id>
 //   nameKey  i18n-Key fuer den Anzeigenamen (locales de/en/fr/zh)
@@ -168,4 +172,30 @@ export function validatePersonas(candidates: readonly unknown[]): string[] {
 /** Nur aktivierte Personas (für die Writer-UI). */
 export function getEnabledPersonas(): Persona[] {
   return PERSONAS.filter((p) => p.enabled);
+}
+
+/**
+ * Baut den System-Prompt einer Persona fuer das LLM-Gateway (P3-3) —
+ * deterministisch und NUR aus der Registry: `role`, `tone` und `rules`.
+ *
+ * Die Funktion ist bewusst pur (kein fetch, kein i18n-Global), damit der
+ * Vertrag „System-Prompt = Registry-Felder" unit-testbar bleibt. Sie enthaelt
+ * KEIN Beispiel (`example`) und keine Persona-Exklusivitaet jenseits der
+ * Registry — das LLM-Gateway (LiteLLM) bekommt nur diesen Text als
+ * `system`-Message, der Nutzertext laeuft als `user`-Message mit.
+ */
+export function buildPersonaSystemPrompt(persona: Persona): string {
+  const rules = persona.rules
+    .map((rule) => rule.trim())
+    .filter((rule) => rule !== '')
+    .map((rule, index) => `${index + 1}. ${rule}`)
+    .join('\n');
+
+  return [
+    `Du schreibst im Auftrag der Persona "${persona.id}".`,
+    `Rolle/Zielgruppe: ${persona.role.trim()}`,
+    `Stimme & Ton: ${persona.tone.trim()}`,
+    'Schreibregeln (immer einhalten):',
+    rules,
+  ].join('\n');
 }

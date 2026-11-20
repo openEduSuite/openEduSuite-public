@@ -1,205 +1,182 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  openEduSuite — Projektübersicht (Landing-Poster)
-  Proportionen nach dem Goldenen Schnitt (φ ≈ 1,618):
-    · Poster 1680×1040 (Verhältnis φ)
-    · Kopfzone endet bei y=643 (1040/φ); Kachelraster darunter
-    · 10 Kacheln 2×5, je 256×158 (Verhältnis φ), Abstand 40
-    · Kachel-Inhalte werden im 340er-Maß gezeichnet und mit scale(0.753)
-      auf 256 herunterskaliert (identische Geometrie, kleiner Steg)
-  Heller „Poster“-Grund: funktioniert auf hellem UND dunklem Seitenhintergrund.
+  openEduSuite — Projektübersicht (Landing-Poster, kubistische Kunst)
+  Stil: Picasso/Cubismus — planare Facetten, asymmetrisches Doppel-Ansichts-
+  Gesicht mit Profilnase, Gitarre, geometrische Fenster. Golden-Ratio-Canvas
+  (1680×1040, φ ≈ 1,618); Fokus des Gesichts auf dem φ-Punkt (~1038, ~643).
+  Statisches Bild: ersetzt die interaktive three.js-Szene auf der
+  öffentlichen Startseite (leichtgewichtig, ohne WebGL).
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1040" role="img"
      aria-label="openEduSuite Projektübersicht: ein Login für Mail, Chat, Cloud, Video, Dokumente, Kalender, Identität, KI, Forschung und Assistent">
   <defs>
-    <linearGradient id="oe-brand" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#2563eb"/>
-      <stop offset="1" stop-color="#0284c7"/>
-    </linearGradient>
-    <linearGradient id="oe-head" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#eff6ff"/>
-      <stop offset="1" stop-color="#f8fafc"/>
-    </linearGradient>
+    <style>
+      .outline { stroke: #221e19; stroke-width: 6; stroke-linejoin: miter; }
+      .outline-w { stroke: #221e19; stroke-width: 5; stroke-linejoin: miter; }
+      .hint     { stroke: #a89a80; stroke-width: 3; stroke-linejoin: round; }
+    </style>
   </defs>
 
-  <!-- Poster-Grund -->
-  <rect x="0" y="0" width="1680" height="1040" rx="24" fill="#ffffff" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- ══════════ Grund / Hintergrund-Grundfläche ══════════ -->
+  <rect x="0" y="0" width="1680" height="1040" fill="#f6efdd"/>
 
-  <!-- Kopfzone (bis y=643) -->
-  <rect x="0" y="0" width="1680" height="643" rx="24" fill="url(#oe-head)"/>
-  <rect x="0" y="619" width="1680" height="24" fill="#f8fafc"/>
-
-  <!-- Brand-Marke: gerundetes Quadrat + Monogramm -->
-  <g transform="translate(120,150)">
-    <rect x="0" y="0" width="120" height="120" rx="30" fill="url(#oe-brand)"/>
-    <text x="60" y="76" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-          font-size="46" font-weight="700" fill="#ffffff">oE</text>
-  </g>
-  <text x="290" y="196" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-        font-size="64" font-weight="700" fill="#0f172a">openEduSuite</text>
-  <text x="292" y="256" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-        font-size="30" fill="#475569">Ein Login — alle Dienste der Universität.</text>
-
-  <!-- Kopfzeile rechts: Leistungsbilanz -->
-  <text x="1560" y="174" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-        font-size="24" font-weight="600" fill="#0f172a">32 Dienste · ein Login</text>
-  <text x="1560" y="204" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-        font-size="18" fill="#64748b">Stand: November 2026</text>
-
-  <!-- Single-Sign-On-Andeutung: Login-Punkt verzweigt zu allen Kacheln -->
-  <g stroke="#94a3b8" stroke-width="3" stroke-dasharray="2 8" fill="none" opacity="0.9">
-    <path d="M 180 330 C 300 380 520 420 480 470"/>
-    <path d="M 240 340 C 480 400 700 410 840 470"/>
-    <path d="M 340 350 C 700 420 1000 420 1200 470"/>
-    <path d="M 430 350 C 940 430 1300 430 1560 470"/>
-  </g>
-  <circle cx="180" cy="330" r="26" fill="url(#oe-brand)"/>
-  <text x="180" y="340" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-        font-size="22" font-weight="700" fill="#ffffff">SSO</text>
-
-  <!-- Kachelraster 2×5 (y=643 … 999) — je 256×158 (φ), Abstand 40 -->
-  <!-- Kacheln werden im 340er-Maß gezeichnet und mit scale(0.753) herunterskaliert. -->
-  <g transform="translate(120,643) scale(0.75294118)">
-    <!-- Zeile 1, Spalte 1: Mail -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#2563eb"/>
-      <g transform="translate(122,58)" fill="none" stroke="#2563eb" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <rect x="0" y="6" width="96" height="68" rx="10"/>
-        <path d="M 4 14 L 48 46 L 92 14"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Mail</text>
-    </g>
-  </g>
-  <g transform="translate(416,643) scale(0.75294118)">
-    <!-- Zeile 1, Spalte 2: Chat -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#7c3aed"/>
-      <g transform="translate(122,54)" fill="none" stroke="#7c3aed" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 8 10 q 0 -8 8 -8 h 72 q 8 0 8 8 v 44 q 0 8 -8 8 h -44 l -20 18 v -18 h -8 q -8 0 -8 -8 z"/>
-        <circle cx="32" cy="32" r="3.5" fill="#7c3aed" stroke="none"/>
-        <circle cx="48" cy="32" r="3.5" fill="#7c3aed" stroke="none"/>
-        <circle cx="64" cy="32" r="3.5" fill="#7c3aed" stroke="none"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Chat</text>
-    </g>
-  </g>
-  <g transform="translate(712,643) scale(0.75294118)">
-    <!-- Zeile 1, Spalte 3: Cloud -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#0891b2"/>
-      <g transform="translate(122,66)" fill="none" stroke="#0891b2" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 24 66 h 52 a 20 20 0 0 0 6 -39 a 30 30 0 0 0 -58 -8 a 22 22 0 0 0 0 47 z"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Cloud</text>
-    </g>
-  </g>
-  <g transform="translate(1008,643) scale(0.75294118)">
-    <!-- Zeile 1, Spalte 4: Video -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#e11d48"/>
-      <g transform="translate(122,62)" fill="none" stroke="#e11d48" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <rect x="0" y="10" width="64" height="52" rx="10"/>
-        <path d="M 70 26 L 96 12 v 48 l -26 -14"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Video</text>
-    </g>
-  </g>
-  <g transform="translate(1304,643) scale(0.75294118)">
-    <!-- Zeile 1, Spalte 5: Forschung (OpenScience) -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#0d9488"/>
-      <g transform="translate(122,58)" fill="none" stroke="#0d9488" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 34 4 h 28"/>
-        <path d="M 42 4 v 22 l -24 36 a 10 10 0 0 0 8 16 h 44 a 10 10 0 0 0 8 -16 l -24 -36 v -22"/>
-        <path d="M 18 58 h 60"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Forschung</text>
-    </g>
-  </g>
-  <g transform="translate(120,841) scale(0.75294118)">
-    <!-- Zeile 2, Spalte 1: Dokumente -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#d97706"/>
-      <g transform="translate(130,54)" fill="none" stroke="#d97706" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 10 0 h 44 l 22 22 v 50 h -66 z"/>
-        <path d="M 54 0 v 22 h 22"/>
-        <path d="M 26 40 h 34 M 26 56 h 34"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Dokumente</text>
-    </g>
-  </g>
-  <g transform="translate(416,841) scale(0.75294118)">
-    <!-- Zeile 2, Spalte 2: Kalender -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#059669"/>
-      <g transform="translate(124,58)" fill="none" stroke="#059669" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <rect x="0" y="10" width="88" height="72" rx="10"/>
-        <path d="M 0 34 h 88"/>
-        <path d="M 22 0 v 18 M 66 0 v 18"/>
-        <circle cx="28" cy="58" r="4" fill="#059669" stroke="none"/>
-        <circle cx="48" cy="58" r="4" fill="#059669" stroke="none"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Kalender</text>
-    </g>
-  </g>
-  <g transform="translate(712,841) scale(0.75294118)">
-    <!-- Zeile 2, Spalte 3: Identität -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#475569"/>
-      <g transform="translate(124,56)" fill="none" stroke="#475569" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <path d="M 44 4 l 36 14 v 28 q 0 34 -36 46 q -36 -12 -36 -46 v -28 z"/>
-        <circle cx="44" cy="40" r="12"/>
-        <path d="M 26 72 q 6 -14 18 -14 q 12 0 18 14"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Identität</text>
-    </g>
-  </g>
-  <g transform="translate(1008,841) scale(0.75294118)">
-    <!-- Zeile 2, Spalte 4: KI -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#0284c7"/>
-      <g transform="translate(124,58)" fill="#0284c7">
-        <path d="M 40 0 l 8 24 24 8 -24 8 -8 24 -8 -24 -24 -8 24 -8 z"/>
-        <path d="M 76 44 l 5 14 14 5 -14 5 -5 14 -5 -14 -14 -5 14 -5 z"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">KI</text>
-    </g>
-  </g>
-  <g transform="translate(1304,841) scale(0.75294118)">
-    <!-- Zeile 2, Spalte 5: Assistent (F13) -->
-    <g>
-      <rect width="340" height="210" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      <rect width="340" height="6" rx="3" fill="#c026d3"/>
-      <g transform="translate(122,58)" fill="none" stroke="#c026d3" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
-        <rect x="10" y="10" width="76" height="76" rx="16"/>
-      </g>
-      <g transform="translate(122,58)" fill="#c026d3">
-        <path d="M 48 28 l 4 12 12 4 -12 4 -4 12 -4 -12 -12 -4 12 -4 z"/>
-      </g>
-      <text x="170" y="182" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-            font-size="28" font-weight="600" fill="#334155">Assistent</text>
-    </g>
+  <!-- Diagonalstrahlen (Energie) von oben rechts -->
+  <g stroke="#d8c69b" stroke-width="4" fill="none" opacity="0.8">
+    <path d="M 1680 0 L 1180 1040"/>
+    <path d="M 1680 140 L 1420 1040"/>
+    <path d="M 1520 0 L 1000 1040"/>
   </g>
 
-  <!-- Fußzeile -->
-  <text x="840" y="1026" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
-        font-size="18" fill="#64748b">openEduSuite — 32 Dienste für Lehre, Studium und Forschung · Stand: November 2026</text>
+  <!-- ══════════ Kubistische Fenster / Architektur (Les-Demoiselles-Motiv) ══════════ -->
+  <g class="outline">
+    <polygon points="0,0 560,0 520,360 0,430" fill="#1d3a5f"/>
+    <polygon points="400,0 720,0 700,300 430,320" fill="#2f5d8a"/>
+    <polygon points="0,430 520,360 560,560 0,600" fill="#7d93ad"/>
+    <polygon points="1120,0 1680,0 1680,340 1280,300" fill="#1d6f74"/>
+  </g>
+  <!-- Fensterkreuze -->
+  <g class="hint" stroke="#b8c4cd">
+    <path d="M 0 210 L 520 175"/>
+    <path d="M 270 0 L 240 430"/>
+    <path d="M 400 155 V 0 M 720 155 V 0"/>
+    <path d="M 560 0 V 360"/>
+    <path d="M 1420 0 V 300 M 1120 0 V 300"/>
+  </g>
+
+  <!-- Sonnen-/Fächer-Fläche hinter dem Kopf (Wärme + Fokus) -->
+  <circle cx="1200" cy="430" r="250" fill="#ecc87e"/>
+  <g class="outline">
+    <polygon points="930,300 1460,160 1510,440 990,470" fill="#ecbb5f"/>
+    <polygon points="990,470 1360,300 1460,160" fill="#f2d489"/>
+  </g>
+
+  <!-- ══════════ Gitarre (links, kubistisch) ══════════ -->
+  <g class="outline">
+    <!-- Hals + Kopfplatte -->
+    <polygon points="500,150 600,118 706,440 566,462" fill="#7a874e"/>
+    <polygon points="472,128 562,92 616,148 546,178" fill="#c05a2c"/>
+    <!-- Wirbel -->
+    <rect x="492" y="96" width="18" height="10" fill="#221e19"/>
+    <rect x="502" y="112" width="18" height="10" fill="#221e19"/>
+    <rect x="512" y="128" width="18" height="10" fill="#221e19"/>
+    <!-- Korpus: obere Wölbung + untere Wölbung -->
+    <polygon points="432,410 742,366 824,580 664,650 454,610" fill="#d99b3a"/>
+    <polygon points="524,618 704,566 884,786 782,888 544,842" fill="#9c3420"/>
+  </g>
+  <!-- Schallloch (Rosette, Kreise) -->
+  <circle cx="654" cy="726" r="76" fill="#221e19"/>
+  <circle cx="654" cy="726" r="58" fill="#f6efdd"/>
+  <circle cx="654" cy="726" r="28" fill="#c05a2c"/>
+  <g stroke="#d99b3a" stroke-width="4" fill="none">
+    <circle cx="654" cy="726" r="66"/>
+    <circle cx="654" cy="726" r="50"/>
+  </g>
+  <!-- Saiten (Kopf → Schallloch) -->
+  <g stroke="#f6efdd" stroke-width="3" opacity="0.85">
+    <line x1="540" y1="142" x2="656" y2="668"/>
+    <line x1="556" y1="136" x2="658" y2="668"/>
+    <line x1="572" y1="130" x2="660" y2="668"/>
+    <line x1="588" y1="124" x2="662" y2="668"/>
+  </g>
+  <!-- Kubistische Facet-Scherbe über der Gitarre -->
+  <polygon points="726,640 900,612 862,800 700,742" fill="#2f5d8a" class="outline-w"/>
+  <polygon points="640,800 780,772 756,884 610,856" fill="#1d6f74" class="outline-w"/>
+
+  <!-- ══════════ Das Gesicht (Doppel-Ansicht, φ-Fokus ~1038/643) ══════════ -->
+  <!-- Haar-Masse hinten (mehrere dunkle Facetten) -->
+  <g class="outline">
+    <polygon points="900,150 1260,80 1480,210 1460,520 1340,610 1040,560 900,420" fill="#1d3a5f"/>
+    <polygon points="960,120 1080,80 1120,220 1000,260" fill="#221e19"/>
+    <polygon points="1360,140 1490,220 1460,360 1340,300" fill="#7d93ad"/>
+  </g>
+
+  <!-- Grundfläche des Gesichts -->
+  <polygon points="980,300 1190,220 1440,320 1500,540 1360,720 1060,660 930,500" fill="#f2e6c8" class="outline"/>
+  <!-- Stirn-Highlight -->
+  <polygon points="1030,290 1170,250 1360,320 1390,400 1230,360 1080,400" fill="#faf3e0" class="outline-w"/>
+
+  <!-- Homofernen „Sonnen-Auge“ auf der Stirn (Picasso-Motiv) -->
+  <circle cx="1160" cy="330" r="18" fill="#f6efdd" class="outline-w"/>
+  <circle cx="1160" cy="330" r="7" fill="#1d6f74"/>
+
+  <!-- Linkes Auge (Almond, zur Betrachter:in) -->
+  <g class="outline">
+    <ellipse cx="1094" cy="482" rx="96" ry="44" transform="rotate(-10 1094 482)" fill="#f6efdd"/>
+    <circle cx="1094" cy="486" r="28" fill="#1d6f74"/>
+    <circle cx="1094" cy="486" r="13" fill="#221e19"/>
+    <circle cx="1086" cy="478" r="5" fill="#f6efdd"/>
+    <polygon points="1010,452 1190,434 1168,478 1028,470" fill="#d99b3a"/>
+  </g>
+
+  <!-- Rechtes Auge (rund, Profil-Blick) -->
+  <g class="outline">
+    <circle cx="1352" cy="470" r="50" fill="#f6efdd"/>
+    <polygon points="1304,442 1414,424 1408,468 1312,458" fill="#bf4a2a"/>
+    <circle cx="1348" cy="486" r="23" fill="#1d3a5f"/>
+    <circle cx="1348" cy="486" r="11" fill="#221e19"/>
+    <circle cx="1342" cy="480" r="4.5" fill="#f6efdd"/>
+  </g>
+  <!-- Augenbraue (starker Strich) -->
+  <path d="M 1294 432 L 1412 408" stroke="#221e19" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Profil-Nase (Signatur: lange Nase über das Gesicht) -->
+  <g class="outline">
+    <polygon points="1200,392 1290,380 1380,470 1332,610 1224,562 1182,472" fill="#e4c380"/>
+    <polygon points="1216,424 1276,412 1338,484 1250,492" fill="#f7ecd2"/>
+  </g>
+  <circle cx="1342" cy="562" r="9" fill="#221e19"/>
+  <circle cx="1212" cy="566" r="8" fill="#221e19"/>
+
+  <!-- Wangen-Facetten -->
+  <g class="outline">
+    <polygon points="956,522 1140,506 1112,690 950,660" fill="#e6b56a"/>
+    <polygon points="1382,610 1492,568 1532,700 1392,742" fill="#cf8436"/>
+  </g>
+
+  <!-- Mund (zweifarbig, geometrisch) -->
+  <g class="outline">
+    <polygon points="1152,652 1312,632 1412,682 1342,716 1232,692" fill="#b2352a"/>
+    <polygon points="1262,700 1372,674 1432,732 1322,776" fill="#d99b3a"/>
+  </g>
+  <path d="M 1112 668 L 1432 690" stroke="#221e19" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Kinn + Hals -->
+  <g class="outline">
+    <polygon points="1172,700 1342,672 1432,762 1302,830 1122,790" fill="#c96f2e"/>
+    <polygon points="1094,782 1264,748 1380,832 1346,882 1124,882 1064,832" fill="#e6b56a"/>
+  </g>
+
+  <!-- Schultern / Torso-Anmutung -->
+  <g class="outline">
+    <polygon points="842,792 1102,762 1134,884 882,894" fill="#1d3a5f"/>
+    <polygon points="1344,842 1562,812 1602,892 1406,886" fill="#9c3420"/>
+  </g>
+
+  <!-- Schwebende Akzente (Kubismus-Punkte) -->
+  <circle cx="880" cy="300" r="14" fill="#1d6f74" class="outline-w"/>
+  <circle cx="1560" cy="620" r="12" fill="#c05a2c" class="outline-w"/>
+  <circle cx="980" cy="180" r="9" fill="#b2352a" class="outline-w"/>
+  <polygon points="860,680 912,664 900,720 848,704" fill="#7a874e" class="outline-w"/>
+  <polygon points="820,560 862,548 854,600 812,588" fill="#2f5d8a" class="outline-w"/>
+
+  <!-- ══════════ Marken-Fußleiste ══════════ -->
+  <rect x="0" y="890" width="1680" height="150" fill="#1c1813"/>
+  <rect x="0" y="890" width="1680" height="6" fill="#c05a2c"/>
+
+  <!-- Monogramm -->
+  <rect x="120" y="924" width="64" height="64" rx="16" fill="#bf4a2a"/>
+  <text x="152" y="966" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="30" font-weight="700" fill="#f2e8d2">oE</text>
+
+  <!-- Markenname + Untertitel -->
+  <text x="212" y="958" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="52" font-weight="700" fill="#f2e8d2">openEduSuite</text>
+  <text x="214" y="994" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="24" fill="#c9b896">Ein Login — alle Dienste der Universität.</text>
+
+  <!-- Leistungsbilanz rechts -->
+  <text x="1560" y="952" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="26" font-weight="600" fill="#f2e8d2">32 Dienste · ein Login</text>
+  <text x="1560" y="986" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="18" fill="#a89a80">Kubistische Kunst · Stand: November 2026</text>
 </svg>

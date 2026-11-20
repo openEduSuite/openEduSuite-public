@@ -3,13 +3,14 @@
 #
 # Gehärtete open-webui-Konfiguration (OpenSpec-Change open-webui-hardening):
 #   OW-01  Image digest-gepinnt (SCG-009) — kein beweglicher Tag.
-#   OW-02  LLM-Routing ausschliesslich an in-Cluster-Ollama — kein off-cluster
-#          Cloud-API-Fallback, keine literalen API-Keys.
+#   OW-02  LLM-Routing ausschliesslich an den In-Cluster-LiteLLM-Gateway
+#          (litellm.llm…:4000/v1, P1-1) — kein direktes Ollama, kein
+#          off-cluster Cloud-API-Fallback, keine literalen API-Keys.
 #   OW-03  WEBUI_SECRET_KEY aus Secret open-webui (scripts/ensure-open-webui-secret.sh).
 # Vertragstest: tests/sso/check-open-webui-hardening.mjs
 ---
 # Pipelines (OW-06): aus — sonst verdrängt der Chart-Default (enabled: true)
-# OPENAI_API_BASE_URL auf den internen Pipelines-Service und unser Ollama-
+# OPENAI_API_BASE_URL auf den internen Pipelines-Service und unser Gateway-
 # Routing (openaiBaseApiUrl) greift nicht.
 pipelines:
   enabled: false
@@ -25,10 +26,14 @@ image:
   repository: ghcr.io/open-webui/open-webui
   tag: "@sha256:46b59158e6558eeb980bc828e0f1b30238ad24d82ed84d5e5eda1dab2a082f14"
   pullPolicy: IfNotPresent
-# In-Cluster-Routing: ollama-next (NS llm) trägt die OpenAI-kompatible API.
-openaiBaseApiUrl: "http://ollama-next.llm.svc.cluster.local:11434/v1"
-ollamaUrls:
-  - "http://ollama-next.llm.svc.cluster.local:11434"
+# LLM-Routing (P1-1) via LiteLLM-Gateway (NS llm, k8s/llm): offene
+# OpenAI-kompatible API auf :4000/v1 — Modell-Aliase, Budgets und Keys
+# werden zentral im Gateway erzwungen (docs/superpowers/plans/
+# 2026-11-16-litellm-ai-gateway.md). Kein direktes Ollama mehr.
+openaiBaseApiUrl: "http://litellm.llm.svc.cluster.local:4000/v1"
+# Bewusst leer ([]): open-webui spricht ausschliesslich ueber den Gateway,
+# kein direkter Ollama-Zugriff mehr (NetPol- und Key-Erzwingung im Gateway).
+ollamaUrls: []
 extraEnvVars:
   # MCP-Tool-Server (Admin > Integrations, OAuth) benötigen WEBUI_SECRET_KEY —
   # als Secret-Referenz, nie als Literal (bereitgestellt durch
@@ -38,6 +43,16 @@ extraEnvVars:
       secretKeyRef:
         name: open-webui
         key: webui-secret-key
+  # LiteLLM-Gateway-Auth (P1-1): virtueller API-Key als Secret-Referenz —
+  # NIE als Literal (gleiche Regel wie WEBUI_SECRET_KEY). Quelle: Secret
+  # `litellm` (NS llm), Key `open-webui-key`, geseedet von
+  # seeds/ensure-litellm-secret.sh und dort zu einer LiteLLM-Virtual-Key
+  # mit Modell-/Budget-Limits zu binden.
+  - name: OPENAI_API_KEY
+    valueFrom:
+      secretKeyRef:
+        name: litellm
+        key: open-webui-key
   # MCP-Konnektion bleibt bewusst admin-gated und AUS. Erst freischalten,
   # wenn der MCP-Betrieb (Tool-Server-Allowlist, Access Control) dokumentiert ist:
   # - name: ENABLE_TOOL_SERVERS

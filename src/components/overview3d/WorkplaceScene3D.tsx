@@ -65,6 +65,7 @@ export default function WorkplaceScene3D({ onZoneSelect }: Props) {
   const handleRef = useRef<{
     dispose(): void;
     setAutoRotate(v: boolean): void;
+    setEmbedded(embedded: boolean): void;
     resize(): void;
     resetView(): void;
     focusZone(zoneId: string): void;
@@ -88,13 +89,22 @@ export default function WorkplaceScene3D({ onZoneSelect }: Props) {
       label: t(z.labelKey),
       icon: z.icon,
       color: z.color,
-      tools: z.services.map((s) => ({
-        id: s.id,
-        name: s.icon ? `${s.icon} ${s.id}` : s.id,
-        zoneId: z.id,
-        zoneColor: z.color,
-        launchUrl: s.launchUrl,
-      })),
+      tools: z.services.map((s) => {
+        // Lokalisierter Werkzeugname (`services.<id>.name`) mit Fallback auf die
+        // rohe Id — In-Szene-Label und Hover-Tooltip zeigen so „🔐 Keycloak
+        // SSO“ statt „🔐 keycloak“. Fallback-Muster: t() liefert bei fehlendem
+        // Key den Key selbst zurück (=== Prüfung).
+        const serviceKey = `services.${s.id}.name`;
+        const localized = t(serviceKey);
+        const title = localized !== serviceKey ? localized : s.id;
+        return {
+          id: s.id,
+          name: s.icon ? `${s.icon} ${title}` : title,
+          zoneId: z.id,
+          zoneColor: z.color,
+          launchUrl: s.launchUrl,
+        };
+      }),
     });
     // Zwei Kreise: User-Apps (Themen-Kreise außen) + Staff-Apps (eigener innerer
     // Kreis «Verwaltung & Support»).
@@ -131,6 +141,9 @@ export default function WorkplaceScene3D({ onZoneSelect }: Props) {
           },
         },
         // Eingebettete Vorschau rotiert dezenter als das Vollbild (T-PRS-08 #4).
+        // `expanded` bewusst NICHT in den Deps: der Vollbild-Toggle baut die
+        // Szene nicht neu (teuer: alle Label-Canvases + Texturen, Lade-Flash),
+        // sondern wechselt das Rotationstempo per setEmbedded — zweiter Effekt.
         {
           embedded: !expanded,
           staff,
@@ -148,7 +161,12 @@ export default function WorkplaceScene3D({ onZoneSelect }: Props) {
       setSceneReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded, zones, staff, monumentLabel]); // bei Vollbild-Wechsel oder Sprach-/Katalog-Änderung neu aufbauen
+  }, [zones, staff, monumentLabel]); // bei Sprach-/Katalog-Änderung neu aufbauen
+
+  // Vollbild/Einbettung wechseln NUR das Rotationsprofil — kein Szenen-Neubau.
+  useEffect(() => {
+    handleRef.current?.setEmbedded(!expanded);
+  }, [expanded]);
 
   // WICHTIG (Regressionsklasse): im Vollbild darf NIEMALS `relative` + `fixed`
   // gleichzeitig aktiv sein — im erzeugten CSS steht `.relative` NACHT `.fixed`

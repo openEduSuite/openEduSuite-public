@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  openEduSuite — Projektübersicht (Landing-Poster, konkrete Kunst)
+  Stil: Wassily Kandinsky («Komposition», Punkt und Linie zu Fläche) — frei
+  schwebende Kreis-, Dreieck- und Bogenformen, von dünnen Energielinien
+  durchzogen; der Zielpunkt-Ring (Fokus) liegt auf dem φ-Punkt (~1038, ~643).
+  Golden-Ratio-Canvas 1680×1040 (φ ≈ 1,618).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1040" role="img"
+     aria-label="openEduSuite Projektübersicht im Stil von Wassily Kandinsky: ein Login für Mail, Chat, Cloud, Video, Dokumente, Kalender, Identität und KI">
+  <defs>
+    <style>
+      .ink { stroke: #1c1a16; }
+    </style>
+  </defs>
+
+  <!-- ══════════ Grund ══════════ -->
+  <rect x="0" y="0" width="1680" height="1040" fill="#f3ead6"/>
+
+  <!-- Energielinien (lyrisch, von oben links nach unten rechts) -->
+  <g stroke="#1c1a16" stroke-width="3" opacity="0.5" fill="none">
+    <path d="M 0 120 L 1380 890"/>
+    <path d="M 0 320 L 1180 890"/>
+    <path d="M 0 520 L 980 890"/>
+  </g>
+
+  <!-- Schwebende Bogenwelle (oben) -->
+  <path d="M 300 70 A 480 300 0 0 1 1380 50"
+        fill="none" stroke="#d9a441" stroke-width="10" opacity="0.85"/>
+
+  <!-- Großer Umrisskreis (links) -->
+  <circle cx="380" cy="300" r="205" fill="none" stroke="#1c1a16" stroke-width="9"/>
+
+  <!-- Gefüllter blauer Kreis (oben rechts) -->
+  <circle cx="1240" cy="150" r="150" fill="#2f4f8f"/>
+
+  <!-- Dreieck (ocker, oben Mitte) -->
+  <polygon points="920,330 1320,330 1120,110" fill="#d9a441" stroke="#1c1a16" stroke-width="7"/>
+
+  <!-- Kompassbögen (teal + blau) -->
+  <path d="M 560 590 A 175 175 0 0 1 735 415" fill="none" stroke="#2c7a78" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 840 650 A 150 150 0 0 0 690 800" fill="none" stroke="#2f4f8f" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Viertelkreis (teal, unten links) — «Dienst-Scheibe» -->
+  <path d="M 95 745 A 210 210 0 0 1 305 535 L 95 535 Z" fill="#2c7a78"/>
+  <path d="M 215 745 A 90 90 0 0 1 305 655" fill="none" stroke="#f3ead6" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- ══════════ Fokus: konzentrische Zielringe (φ-Punkt 1038/643) ══════════ -->
+  <circle cx="1038" cy="643" r="210" fill="none" stroke="#1c1a16" stroke-width="10"/>
+  <circle cx="1038" cy="643" r="168" fill="#c8322a"/>
+  <circle cx="1038" cy="643" r="104" fill="#f3ead6"/>
+  <circle cx="1038" cy="643" r="52" fill="#2f4f8f"/>
+  <circle cx="1038" cy="643" r="14" fill="#c8322a"/>
+
+  <!-- Akkord-Tonpunkte (Kandinsky: Kunst = Komposition wie Musik) -->
+  <g fill="#1c1a16">
+    <circle cx="230" cy="560" r="18"/>
+    <circle cx="520" cy="218" r="12"/>
+    <circle cx="920" cy="120" r="15"/>
+    <circle cx="1500" cy="560" r="17"/>
+    <circle cx="720" cy="812" r="10"/>
+    <circle cx="778" cy="824" r="9"/>
+    <circle cx="832" cy="834" r="10"/>
+    <circle cx="886" cy="842" r="9"/>
+  </g>
+  <circle cx="1460" cy="762" r="24" fill="#d9a441" stroke="#1c1a16" stroke-width="6"/>
+  <circle cx="402" cy="892" r="13" fill="#c8322a"/>
+  <circle cx="470" cy="886" r="9" fill="#2f4f8f"/>
+  <circle cx="532" cy="892" r="12" fill="#d9a441"/>
+
+  <!-- Knippe: kleine schwebende Striche (Punkt-zu-Linien) -->
+  <g stroke="#1c1a16" stroke-width="6" stroke-linecap="round">
+    <line x1="560" y1="320" x2="640" y2="300"/>
+    <line x1="1380" y1="640" x2="1460" y2="620"/>
+    <line x1="640" y1="500" x2="640" y2="560"/>
+  </g>
+
+  <!-- ══════════ Marken-Fußleiste ══════════ -->
+  <rect x="0" y="890" width="1680" height="150" fill="#1c1813"/>
+  <rect x="0" y="890" width="1680" height="6" fill="#c05a2c"/>
+
+  <!-- Monogramm -->
+  <rect x="120" y="924" width="64" height="64" rx="16" fill="#bf4a2a"/>
+  <text x="152" y="966" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="30" font-weight="700" fill="#f2e8d2">oE</text>
+
+  <!-- Markenname + Untertitel -->
+  <text x="212" y="958" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="52" font-weight="700" fill="#f2e8d2">openEduSuite</text>
+  <text x="214" y="994" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="24" fill="#c9b896">Ein Login — alle Dienste der Universität.</text>
+
+  <!-- Leistungsbilanz rechts -->
+  <text x="1560" y="952" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="26" font-weight="600" fill="#f2e8d2">32 Dienste · ein Login</text>
+  <text x="1560" y="986" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="18" fill="#a89a80">Konkrete Kunst · nach Wassily Kandinsky</text>
+</svg>

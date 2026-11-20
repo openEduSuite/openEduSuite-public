@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  openEduSuite — Projektübersicht (Landing-Poster, Post-Impressionismus)
+  Stil: Vincent van Gogh («Sternennacht») — wirbelnde Pinselstrich-Bänder in
+  Ultramarin/Teal/Gold, goldene Mondsichel auf dem φ-Punkt (~1038, ~643),
+  dunkle Zypressenflammen und ein Dorf mit erleuchteten Fenstern (die Dienste
+  der openEduSuite leuchten in der Nacht). Golden-Ratio-Canvas 1680×1040.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1040" role="img"
+     aria-label="openEduSuite Projektübersicht im Stil von Vincent van Gogh: ein Login für Mail, Chat, Cloud, Video, Dokumente, Kalender, Identität und KI">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16226e"/>
+      <stop offset="1" stop-color="#22308f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ══════════ Himmel ══════════ -->
+  <rect x="0" y="0" width="1680" height="890" fill="url(#sky)"/>
+
+  <!-- Wirbelnde Pinselstrich-Bänder -->
+  <path d="M 0 300 C 300 180 420 420 700 320 C 950 240 1100 420 1300 340 C 1500 270 1600 330 1680 290"
+        fill="none" stroke="#3b5cb8" stroke-width="34" stroke-linecap="round" opacity="0.95"/>
+  <path d="M 0 520 C 300 400 460 640 720 540 C 980 450 1120 630 1320 560 C 1500 500 1620 560 1680 510"
+        fill="none" stroke="#2c8f8f" stroke-width="26" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 0 150 C 300 60 500 240 760 150 C 1020 60 1180 220 1380 130 C 1530 60 1640 140 1680 110"
+        fill="none" stroke="#2a4f9e" stroke-width="22" stroke-linecap="round" opacity="0.95"/>
+  <path d="M 500 240 C 660 300 720 220 860 280"
+        fill="none" stroke="#f2c14e" stroke-width="9" stroke-linecap="round" opacity="0.8"/>
+  <path d="M 1180 480 C 1300 520 1400 440 1560 500"
+        fill="none" stroke="#f2c14e" stroke-width="9" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Sterne (Spitzenglimmen + Punkte) -->
+  <g stroke="#f2c14e" stroke-width="6" stroke-linecap="round">
+    <path d="M 240 240 L 268 240 M 254 226 L 254 254"/>
+    <path d="M 620 140 L 648 140 M 634 126 L 634 154"/>
+    <path d="M 1250 120 L 1278 120 M 1264 106 L 1264 134"/>
+    <path d="M 1550 300 L 1578 300 M 1564 286 L 1564 314"/>
+    <path d="M 400 560 L 428 560 M 414 546 L 414 574"/>
+    <path d="M 1400 520 L 1428 520 M 1414 506 L 1414 534"/>
+    <path d="M 920 220 L 948 220 M 934 206 L 934 234"/>
+    <path d="M 1650 640 L 1678 640 M 1664 626 L 1664 654"/>
+  </g>
+  <g fill="#f2c14e">
+    <circle cx="300" cy="360" r="5"/>
+    <circle cx="760" cy="260" r="5"/>
+    <circle cx="1120" cy="180" r="5"/>
+    <circle cx="1460" cy="240" r="5"/>
+    <circle cx="520" cy="480" r="5"/>
+    <circle cx="1340" cy="660" r="5"/>
+    <circle cx="220" cy="640" r="5"/>
+  </g>
+
+  <!-- ══════════ Fokus: goldene Mondsichel (φ-Punkt 1038/643) ══════════ -->
+  <circle cx="1038" cy="643" r="152" fill="none" stroke="#3b5cb8" stroke-width="12" opacity="0.85"/>
+  <circle cx="1038" cy="643" r="180" fill="none" stroke="#f2c14e" stroke-width="6" opacity="0.5"/>
+  <path d="M 1038 523 A 120 120 0 1 1 1038 763 A 92 92 0 1 0 1038 523 Z" fill="#f2c14e"/>
+
+  <!-- Zypressenflammen (links) -->
+  <path d="M 330 860 C 300 700 240 560 300 430 C 330 350 360 310 350 250 C 380 290 400 330 400 410 C 420 510 420 700 380 860 Z"
+        fill="#0f2419"/>
+  <path d="M 470 868 C 452 740 420 640 452 540 C 468 470 484 440 480 400 C 500 428 512 460 512 520 C 526 620 516 760 500 868 Z"
+        fill="#122b1d"/>
+
+  <!-- ══════════ Dorf (die Dienste leuchten in der Nacht) ══════════ -->
+  <path d="M 0 830 Q 240 720 520 830 T 1100 812 T 1680 830 L 1680 890 L 0 890 Z" fill="#17394a"/>
+  <rect x="0" y="830" width="1680" height="60" fill="#12293a"/>
+
+  <!-- Häuser mit erleuchteten Fenstern -->
+  <g>
+    <!-- Haus 1 -->
+    <rect x="110" y="806" width="90" height="60" fill="#0e1f2a"/>
+    <polygon points="100,806 155,764 210,806" fill="#6b3f2a"/>
+    <circle cx="138" cy="834" r="7" fill="#f7d774"/>
+    <circle cx="172" cy="834" r="7" fill="#f7d774"/>
+    <!-- Kirche mit Spitze -->
+    <rect x="712" y="800" width="72" height="62" fill="#0e1f2a"/>
+    <polygon points="712,800 748,686 784,800" fill="#6b3f2a"/>
+    <rect x="746" y="662" width="5" height="24" fill="#0e1f2a"/>
+    <rect x="735" y="672" width="26" height="5" fill="#0e1f2a"/>
+    <circle cx="734" cy="830" r="8" fill="#f7d774"/>
+    <circle cx="762" cy="830" r="8" fill="#f7d774"/>
+    <!-- Haus 2 -->
+    <rect x="560" y="812" width="84" height="56" fill="#0e1f2a"/>
+    <polygon points="552,812 602,774 652,812" fill="#6b3f2a"/>
+    <circle cx="602" cy="840" r="7" fill="#f7d774"/>
+    <!-- Haus 3 (unter der Sichel) -->
+    <rect x="880" y="818" width="96" height="54" fill="#0e1f2a"/>
+    <polygon points="870,818 928,776 986,818" fill="#6b3f2a"/>
+    <circle cx="912" cy="844" r="7" fill="#f7d774"/>
+    <circle cx="948" cy="844" r="7" fill="#f7d774"/>
+    <!-- Haus 4 -->
+    <rect x="1230" y="806" width="88" height="60" fill="#0e1f2a"/>
+    <polygon points="1222,806 1274,762 1326,806" fill="#6b3f2a"/>
+    <circle cx="1274" cy="834" r="7" fill="#f7d774"/>
+    <!-- Haus 5 -->
+    <rect x="1460" y="816" width="90" height="58" fill="#0e1f2a"/>
+    <polygon points="1452,816 1505,772 1558,816" fill="#6b3f2a"/>
+    <circle cx="1505" cy="844" r="7" fill="#f7d774"/>
+  </g>
+
+  <!-- ══════════ Marken-Fußleiste ══════════ -->
+  <rect x="0" y="890" width="1680" height="150" fill="#1c1813"/>
+  <rect x="0" y="890" width="1680" height="6" fill="#c05a2c"/>
+
+  <!-- Monogramm -->
+  <rect x="120" y="924" width="64" height="64" rx="16" fill="#bf4a2a"/>
+  <text x="152" y="966" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="30" font-weight="700" fill="#f2e8d2">oE</text>
+
+  <!-- Markenname + Untertitel -->
+  <text x="212" y="958" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="52" font-weight="700" fill="#f2e8d2">openEduSuite</text>
+  <text x="214" y="994" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="24" fill="#c9b896">Ein Login — alle Dienste der Universität.</text>
+
+  <!-- Leistungsbilanz rechts -->
+  <text x="1560" y="952" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="26" font-weight="600" fill="#f2e8d2">32 Dienste · ein Login</text>
+  <text x="1560" y="986" text-anchor="end" font-family="system-ui,-apple-system,'Segoe UI',sans-serif"
+        font-size="18" fill="#a89a80">Post-Impressionismus · nach Vincent van Gogh</text>
+</svg>

@@ -4,13 +4,16 @@
 // scene.build.test.ts — Laufzeit-Smoke-Test des echten Szenen-Builds (nicht
 // gemockte drei.js-Geometrie, nur Renderer/Controls/RAF/ResizeObserver sind
 // Stubs):
-//  * createWorkplaceScene baut mit den echten Katalogdaten durch (Staff-Kreis
-//    + Themen-Räume), ohne zur Laufzeit zu werfen.
+//  * createWorkplaceScene baut mit den echten (gefilterten) Katalogdaten
+//    durch (Staff-Kreis + Themen-Räume), ohne zur Laufzeit zu werfen.
 //  * Der Staff-Kreis ist vorhanden: Staff-Group auf dem inneren Ring (0,-4.6),
 //    Staff-Bodenring (RingGeometry-Außenradius STAFF_R+0.5), Staff-Sockel
 //    (Cylinder radiusTop 0.36) und Staff-Tools im Fächer (Radius STAFF_TOOL_R).
 //  * Die Themen-Räume sind vorhanden: je Zone eine Trennwand (BoxGeometry
-//    Höhe ROOM_H) und ein Boden-Teppich (RingGeometry Innenradius ROOM_INNER).
+//    Höhe ROOM_H) und ein Boden-Teppich (RingGeometry Innenradius CARPET_INNER).
+//  * Überarbeitung: Die Szene baut nur die nutzerorientierten Zonen (Keycloak/
+//    Argo CD/interne Instanzen fehlen), und jede Trennwand steht an der
+//    proportionalen Sektorgrenze (kein gleichmäßiges 1/N mehr).
 //
 // jsdom hat kein WebGL/2D-Canvas — die Szenen-Helfer sind für genau diesen
 // Fall abgesichert (Guards), daher baut die Szene auch ohne Canvas.
@@ -54,7 +57,19 @@ vi.mock('three/addons/controls/OrbitControls.js', () => ({
   },
 }));
 
-import { createWorkplaceScene, staffStationPosition, staffToolPosition, roomWallTransform, roomBoundaryAngle, SCENE_METRICS } from './scene';
+import {
+  createWorkplaceScene,
+  staffStationPosition,
+  staffToolPosition,
+  roomWallTransform,
+  roomBoundaryAngle,
+  stationAngle,
+  zoneWeight,
+  zoneStartAngles,
+  zoneSectorAngle,
+  filterUserFacingZones,
+  SCENE_METRICS,
+} from './scene';
 import type { SceneZone } from './scene';
 import { getConfig } from '../../config';
 import { buildUserZones, buildStaffZone } from '../../lib/catalog';
@@ -77,9 +92,10 @@ function toZone(z: ZoneLike): SceneZone {
   };
 }
 
+/** Wie die echte Szene: User-Zonen NUR nutzerorientiert, Staff unverändert. */
 function catalogZones(): { zones: SceneZone[]; staff: SceneZone | null } {
   const cfg = getConfig();
-  const zones = buildUserZones(cfg).map(toZone);
+  const zones = filterUserFacingZones(buildUserZones(cfg).map(toZone));
   const staffSrc = buildStaffZone(cfg);
   const staff = staffSrc ? toZone(staffSrc) : null;
   return { zones, staff };
@@ -164,9 +180,10 @@ describe('scene — Laufzeit-Build (echte drei.js-Geometrie)', () => {
     expect(plinth).toBeDefined();
   });
 
-  it('baut zu jeder Zone eine Trennwand und einen Boden-Teppich', () => {
+  it('baut zu jeder nutzerorientierten Zone eine Trennwand und einen Boden-Teppich', () => {
     const { zones } = catalogZones();
     const n = zones.length;
+    expect(n).toBeGreaterThan(1);
     buildScene();
     const meshes = sceneObjects().filter((o): o is THREE.Mesh => o instanceof THREE.Mesh);
     // Trennwände: BoxGeometry mit Wandhöhe ROOM_H (niedrig, unterhalb der
@@ -176,48 +193,64 @@ describe('scene — Laufzeit-Build (echte drei.js-Geometrie)', () => {
       (m) => (m.geometry as THREE.BoxGeometry).type === 'BoxGeometry' && (m.geometry as THREE.BoxGeometry).parameters.height === wallH,
     );
     expect(walls.length).toBe(n);
-    // Boden-Teppiche: RingGeometry mit ROOM_INNER-0.35 als Innenradius — N Stück.
+    // Boden-Teppiche: RingGeometry mit CARPET_INNER als Innenradius — N Stück.
+    const carpetInner = SCENE_METRICS.rooms.carpetInnerRadius;
     const carpets = meshes.filter(
       (m) =>
         (m.geometry as THREE.RingGeometry).type === 'RingGeometry' &&
-        (m.geometry as THREE.RingGeometry).parameters.innerRadius === 9.25,
+        (m.geometry as THREE.RingGeometry).parameters.innerRadius === carpetInner,
     );
     expect(carpets.length).toBe(n);
     // Jede Trennwand steht an einer Sektorgrenze (Position = Wandmitte).
-    const w = roomWallTransform(0, n);
+    const angles = zoneStartAngles(zones.map((z) => zoneWeight(z.tools.length)));
+    const w = roomWallTransform(angles, 0);
     const firstWall = walls.find(
       (m) => Math.abs(m.position.x - (w.inner.x + w.outer.x) / 2) < 1e-6 && Math.abs(m.position.z - (w.inner.z + w.outer.z) / 2) < 1e-6,
     );
     expect(firstWall).toBeDefined();
   });
 
-  it('deckt jeder Teppich die eigene Sektor-Bucht ab (RingGeometry-Theta = -Winkel)', () => {
+  it('deckt jeder Teppich die eigene proportionale Sektor-Bucht ab', () => {
     createWorkplaceScene(container, catalogZones().zones, {}, { embedded: true, staff: catalogZones().staff });
+    const { zones } = catalogZones();
+    const angles = zoneStartAngles(zones.map((z) => zoneWeight(z.tools.length)));
     const meshes = sceneObjects().filter((o): o is THREE.Mesh => o instanceof THREE.Mesh);
+    const carpetInner = SCENE_METRICS.rooms.carpetInnerRadius;
     const carpets = meshes.filter(
       (m) =>
         (m.geometry as THREE.RingGeometry).type === 'RingGeometry' &&
-        (m.geometry as THREE.RingGeometry).parameters.innerRadius === 9.25,
+        (m.geometry as THREE.RingGeometry).parameters.innerRadius === carpetInner,
     );
-    expect(carpets.length).toBe(catalogZones().zones.length);
+    expect(carpets.length).toBe(zones.length);
+    const norm = (x: number) => ((x % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     for (let i = 0; i < carpets.length; i++) {
       const g = carpets[i].geometry as RingGeometry;
       const p = g.parameters;
-      // RingGeometry zeichnet Theta CCW ab +X in der XY-Ebene; die Szene kippt
-      // den Ring um -90° (Welt-Z = -sin θ). Der Teppich der Station i muss den
-      // Sektor von roomWallTransform(i) aus bis zur nächsten Grenze abdecken,
-      // also thetaStart = -Grenze(i), Länge = Sektorwinkel.
-      const norm = (x: number) => ((x % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      expect(norm(p.thetaStart)).toBeCloseTo(norm(-roomBoundaryAngle(i, carpets.length)), 8);
-      expect(p.thetaLength).toBeCloseTo((2 * Math.PI) / carpets.length, 8);
+      // RingGeometry zeichnet Theta CCW ab +X; die Szene kippt den Ring um -90°
+      // (Welt-Z = -sin θ). Der Teppich der Station i deckt exakt ihren Sektor:
+      // thetaStart = -Grenze(i), Länge = proportionaler Sektorwinkel.
+      expect(norm(p.thetaStart)).toBeCloseTo(norm(-roomBoundaryAngle(angles, i)), 8);
+      expect(p.thetaLength).toBeCloseTo(zoneSectorAngle(angles, i), 8);
+      // Die Teppich-Mitte zeigt exakt auf die Station des Sektors (Sektormitte).
+      const midTheta = p.thetaStart + p.thetaLength / 2;
+      expect(norm(midTheta)).toBeCloseTo(norm(-stationAngle(angles, i)), 8);
     }
-    // Konkrete Probe: Teppich 0 (identity-Raum) — Mittelstrahl zeigt auf die
-    // Rückseite (Welt z < 0), exakt dorthin, wo die identity-Station (-90°)
-    // gegenüber dem Desk steht.
-    const g0 = carpets[0].geometry as RingGeometry;
-    const midTheta = g0.parameters.thetaStart + g0.parameters.thetaLength / 2;
-    expect(Math.cos(midTheta)).toBeCloseTo(0, 3); // x ≈ 0
-    expect(-Math.sin(midTheta)).toBeLessThan(0); // z < 0 (Rückseite)
+  });
+
+  it('baut keine Pillar für ausgeblendete Zonen (nur nutzerorientierte Räume)', () => {
+    buildScene();
+    const { zones } = catalogZones();
+    const n = zones.length;
+    // Identität als reine Keycloak-Zone und infrastructure (argocd) fallen weg —
+    // es gibt nur noch n echte Nutzer-Räume (n < Gesamtzonen des Katalogs).
+    const allZones = buildUserZones(getConfig()).length;
+    expect(allZones).toBeGreaterThan(n);
+    const meshes = sceneObjects().filter((o): o is THREE.Mesh => o instanceof THREE.Mesh);
+    const wallH = SCENE_METRICS.rooms.wallHeight;
+    const walls = meshes.filter(
+      (m) => (m.geometry as THREE.BoxGeometry).type === 'BoxGeometry' && (m.geometry as THREE.BoxGeometry).parameters.height === wallH,
+    );
+    expect(walls.length).toBe(n);
   });
 
   it('Staff-Tools erscheinen im Fächer vor der Staff-Station', () => {

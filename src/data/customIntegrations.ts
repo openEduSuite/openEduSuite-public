@@ -76,7 +76,7 @@ export const CUSTOM_INTEGRATIONS: readonly CustomIntegration[] = [
     id: 'bbb-shortlink-relay',
     nameKey: 'integrationen.items.bbbShortlinkRelay.name',
     purpose:
-      'Kompakte /r/-Kurzlinks für BBB-Join-URLs in Kalendereinträgen: Die signierten Join-URLs (~190 Oktette) werden vom 75-Byte-Zeilenbruch der iCalendar-DESCRIPTION abgeschnitten, sodass beim Klick die Raum-ID fehlt. Der Relay antwortet auf /r/<meetingID>/<pw><rolle> mit 302 auf die frisch signierte BBB-v2-Join-URL — Deny-by-default (nur GET/HEAD, keine Query/Fragments, kleines Hex-Format). Der Kalender-Overlay (nc-picker-calendar.js) persistiert seit 2026-11-13 nur noch die Viewer-Zeile (Zuschauer/Link) — der Moderator-Link (eingebettetes Moderator-Passwort) wird dem Erzeuger out-of-band übergeben und nie in die geteilte DESCRIPTION geschrieben, damit eingeladene Teilnehmer nicht als Moderator beitreten können (Moderation-Hygiene, s. docs/bbb-room-description.md).',
+      'Kompakte /r/-Kurzlinks für BBB-Join-URLs in Kalendereinträgen: Die signierten Join-URLs (~190 Oktette) werden vom 75-Byte-Zeilenbruch der iCalendar-DESCRIPTION abgeschnitten, sodass beim Klick die Raum-ID fehlt. Der Relay antwortet auf /r/<meetingID>/<pw><rolle> mit 302 auf die frisch signierte BBB-v2-Join-URL — Deny-by-default (nur GET/HEAD, keine Query/Fragments, kleines Hex-Format). Der Kalender-Overlay (nc-picker-calendar.js) persistiert seit 2026-11-13 nur noch die Viewer-Zeile (Zuschauer/Link) — der Moderator-Link (eingebettetes Moderator-Passwort) wird dem Erzeuger out-of-band übergeben und nie in die geteilte DESCRIPTION geschrieben, damit eingeladene Teilnehmer nicht als Moderator beitreten können (Moderation-Hygiene, s. docs/bbb-room-description.md). Seit der Unification 2026-11-16 steht der Overlay im MAIN-Tenant zurück (Overlay detectet das native #bbb-conference-Element des Fork-Editors und injiziert dort keinen Button); der Text-Link-Pfad bleibt Staff/Students vorbehalten (s. docs/bbb-interconnection.md § 3).',
     services: ['bbb-internal', 'sogo-staff', 'sogo-students'],
     verification: 'bbb-relay/cmd/bbb/shortlink_test.go; tests/nc-picker-calendar-core.test.mjs; tests/sso/pw/pw-calendar-bbb.mjs',
     repoFile: 'bbb-relay/cmd/bbb/shortlink.go; k8s/openedusuite/nc-picker-calendar.js',
@@ -183,6 +183,28 @@ export const CUSTOM_INTEGRATIONS: readonly CustomIntegration[] = [
     operational:
       'Geheimnis floesst sops -> Secret invoiceninja-api-token -> env (IN_API_URL/IN_API_TOKEN) in deploy-n8n.yaml; Workflow-Import von Hand im n8n-UI (Manual Trigger); Gotcha: X-Api-Token-Wert im Header nicht doppelt quoten. LIVE-Abnahme nach Deploy: Workflow ausführen, Execution-Log pruefen, Draft-Rechnung in IN (invoicing.example.org) sichtbar.',
   },
+  {
+    id: 'litellm-ai-gateway',
+    nameKey: 'integrationen.items.litellmAiGateway.name',
+    purpose:
+      'Zentraler AI-Gateway (LiteLLM) vor dem lokalen Qwen3-Next-80B-Modell; alle KI-Consumer der Suite routen darüber.',
+    services: ['open-webui', 'openscience', 'f13', 'dify', 'n8n', 'nextcloud', 'openproject', 'xwiki', 'bbb-internal'],
+    verification: 'tests/sso/check-litellm-gateway.mjs; tests/sso/check-litellm-manifests.mjs',
+    repoFile: 'docs/services-llm.md',
+    operational:
+      'Endpoint litellm.llm.svc.cluster.local:4000/v1; Keys sops-Secret litellm; NetPol beschraenkt.',
+  },
+  {
+    id: 'rt-support-triage',
+    nameKey: 'integrationen.items.rtSupportTriage.name',
+    purpose:
+      'KI-Vor-Klassifizierung fuer das Helpdesk RT (rt.example.org, REST 1.0): Der n8n-Workflow k8s/n8n/workflows/rt-support-triage.json holt neue Tickets (Suche + Ticket-Load via $env.RT_API_URL/RT_API_TOKEN, Basic-Auth), redigiert PII, klassifiziert dann ueber den LiteLLM-AI-Gateway (OpenAI-kompatibel aus $env.LLM_API_URL/$env.LLM_API_KEY, Alias qwen3-30b) zu STRICT JSON {category, urgency, routing, summary (max. 3 Saetze)} und schreibt das Ergebnis im Live-Modus als RT-Kommentar (Marker N8N-TRIAGE = Idempotenz) plus Kurzmeldung an den Matrix-#support-Webhook ($env.MATRIX_SUPPORT_WEBHOOK) — Room-Payload nur Ticket-ID + Klassifizierung, keine PII. RT_TRIAGE_DRY_RUN ist Default true: ohne Env wird nur geloggt, nichts geschrieben. Zammad ist bewusst nicht verdrahtet (Design-Doc 2026-11-16, Entscheidung 1).',
+    services: ['rt'],
+    verification: 'tests/test_rt_support_triage.py',
+    repoFile: 'k8s/n8n/workflows/rt-support-triage.json;docs/support-triage.md',
+    operational:
+      'Workflow per n8n-UI importieren (k8s/n8n/workflows/rt-support-triage.json); Credentials nur via Container-Env (sops -> Secret -> deploy-n8n.yaml): RT_API_URL, RT_USER, RT_API_TOKEN, RT_QUEUE, LLM_API_URL, LLM_API_KEY, MATRIX_SUPPORT_WEBHOOK. Erster Lauf bleibt Dry-Run (RT_TRIAGE_DRY_RUN ungesetzt = true); Live-Modus per RT_TRIAGE_DRY_RUN=false. Offline-Verifikation: pytest tests/test_rt_support_triage.py -q.',
+  },
 ];
 
 /**
@@ -212,6 +234,8 @@ export const INTEGRATION_I18N: Record<IntegrationLang, Record<string, string>> =
     'integrationen.items.blackboxProbes.name': 'Blackbox-Probes (L4-Monitoring)',
     'integrationen.items.checkPortalConfigDriftGuard.name': 'Portal-Config-Drift-Guard',
     'integrationen.items.n8nInvoiceninja.name': 'n8n -> Invoice-Ninja (intern, Credential)',
+    'integrationen.items.litellmAiGateway.name': 'AI-Gateway (LiteLLM, zentral)',
+    'integrationen.items.rtSupportTriage.name': 'RT Support-Triage (n8n → LiteLLM)',
   },
   en: {
     'integrationen.title': 'Custom builds & SSO integrations',
@@ -233,6 +257,8 @@ export const INTEGRATION_I18N: Record<IntegrationLang, Record<string, string>> =
     'integrationen.items.blackboxProbes.name': 'Blackbox probes (L4 monitoring)',
     'integrationen.items.checkPortalConfigDriftGuard.name': 'Portal config drift guard',
     'integrationen.items.n8nInvoiceninja.name': 'n8n -> Invoice-Ninja (internal, credential)',
+    'integrationen.items.litellmAiGateway.name': 'AI gateway (LiteLLM, central)',
+    'integrationen.items.rtSupportTriage.name': 'RT support triage (n8n → LiteLLM)',
   },
   fr: {
     'integrationen.title': 'Développements propres & intégrations SSO',
@@ -254,6 +280,8 @@ export const INTEGRATION_I18N: Record<IntegrationLang, Record<string, string>> =
     'integrationen.items.blackboxProbes.name': 'Sondes blackbox (monitoring L4)',
     'integrationen.items.checkPortalConfigDriftGuard.name': 'Garde anti-dérive de la config du portail',
     'integrationen.items.n8nInvoiceninja.name': 'n8n -> Invoice-Ninja (interne, identifiants)',
+    'integrationen.items.litellmAiGateway.name': 'Passerelle IA (LiteLLM, centrale)',
+    'integrationen.items.rtSupportTriage.name': 'Triage du support RT (n8n → LiteLLM)',
   },
   zh: {
     'integrationen.title': '自主开发与 SSO 集成',
@@ -275,6 +303,8 @@ export const INTEGRATION_I18N: Record<IntegrationLang, Record<string, string>> =
     'integrationen.items.blackboxProbes.name': '黑盒探针（L4 监控）',
     'integrationen.items.checkPortalConfigDriftGuard.name': '门户配置漂移防护',
     'integrationen.items.n8nInvoiceninja.name': 'n8n → Invoice-Ninja（内部、凭证）',
+    'integrationen.items.litellmAiGateway.name': 'AI 网关（LiteLLM，集中式）',
+    'integrationen.items.rtSupportTriage.name': 'RT 支持工单预分类（n8n → LiteLLM）',
   },
 };
 

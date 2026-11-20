@@ -22,6 +22,7 @@ import WorkplaceScene3D from './WorkplaceScene3D';
 const sceneInstances: Array<{
   dispose: ReturnType<typeof vi.fn>;
   setAutoRotate: ReturnType<typeof vi.fn>;
+  setEmbedded: ReturnType<typeof vi.fn>;
   resize: ReturnType<typeof vi.fn>;
   resetView: ReturnType<typeof vi.fn>;
   focusZone: ReturnType<typeof vi.fn>;
@@ -32,6 +33,7 @@ vi.mock('./scene', () => ({
     const handle = {
       dispose: vi.fn(),
       setAutoRotate: vi.fn(),
+      setEmbedded: vi.fn(),
       resize: vi.fn(),
       resetView: vi.fn(),
       focusZone: vi.fn(),
@@ -146,21 +148,37 @@ describe('WorkplaceScene3D — Overlay (T-PRS-04)', () => {
     expect(root.className).toContain('h-[420px]');
   });
 
-  it('baut die Szene bei Sprachwechsel neu (In-Szene-Labels lokalisieren)', async () => {
+  it('überreicht lokalisierte Werkzeugnamen (services.<id>.name statt roher Id)', async () => {
     renderScene();
     await waitFor(() => expect(sceneMock).toHaveBeenCalled());
-    const firstCalls = sceneMock.mock.calls.length;
-    const firstLabel = (sceneMock.mock.lastCall?.[1] as { label: string }[] | undefined)?.[0]?.label;
-    expect(firstLabel).toBeDefined();
-    // Sprachwechsel -> Szenen-Neuaufbau mit lokalisierten Zonen-Labels.
+    const zonesArg = sceneMock.mock.lastCall?.[1] as { id: string; tools: { id: string; name: string }[] }[] | undefined;
+    expect(zonesArg).toBeDefined();
+    const identityTools = zonesArg!.find((z) => z.id === 'identity')?.tools ?? [];
+    // Keycloak hat einen services.keycloak.name-Eintrag („Keycloak SSO“) — die
+    // Szene bekommt den lokalisierten Namen, nicht die rohe Id.
+    const kc = identityTools.find((t) => t.id === 'keycloak');
+    expect(kc).toBeDefined();
+    expect(kc!.name).not.toBe('🔐 keycloak');
+    expect(kc!.name).toContain('Keycloak SSO');
+  });
+
+  it('lokalisiert Staff-Tool-Namen beim Sprachwechsel (services.<id>.name)', async () => {
+    renderScene();
+    await waitFor(() => expect(sceneMock).toHaveBeenCalled());
+    const staffFirst = (() => {
+      const opts = sceneMock.mock.lastCall?.[3] as { staff: { tools: { name: string }[] } | null } | undefined;
+      return opts?.staff?.tools[0]?.name;
+    })();
+    expect(staffFirst).toBeDefined();
+    expect(staffFirst).not.toContain('staff.'); // kein roher Key ohne Übersetzung
     await i18n.changeLanguage('de');
-    await waitFor(() => expect(sceneMock.mock.calls.length).toBeGreaterThan(firstCalls));
-    const secondLabel = (sceneMock.mock.lastCall?.[1] as { label: string }[] | undefined)?.[0]?.label;
-    expect(secondLabel).toBeDefined();
-    expect(secondLabel).not.toBe(firstLabel);
-    // Zurück auf englisch — wieder ein Neuaufbau (Test-Suite bleibt auf en).
-    await i18n.changeLanguage('en');
-    await waitFor(() => expect(sceneMock.mock.calls.length).toBeGreaterThan(firstCalls + 1));
+    await waitFor(() => expect(sceneMock.mock.calls.length).toBeGreaterThan(1));
+    const staffSecond = (() => {
+      const opts = sceneMock.mock.lastCall?.[3] as { staff: { tools: { name: string }[] } | null } | undefined;
+      return opts?.staff?.tools[0]?.name;
+    })();
+    expect(staffSecond).toBeDefined();
+    await i18n.changeLanguage('en'); // Test-Suite bleibt auf en.
   });
 });
 
@@ -229,16 +247,59 @@ describe('WorkplaceScene3D — Ladezustand & Fade-in (T-PRS-08)', () => {
     expect(staff!.tools.length).toBeGreaterThan(0);
   });
 
-  it('baut die Szene im Vollbild ohne Embedded-Daempfung neu (embedded: false)', async () => {
+  it('überreicht lokalisierte Werkzeugnamen (services.<id>.name statt roher Id)', async () => {
     renderScene();
     await waitFor(() => expect(sceneMock).toHaveBeenCalled());
+    const zonesArg = sceneMock.mock.lastCall?.[1] as { id: string; tools: { id: string; name: string }[] }[] | undefined;
+    expect(zonesArg).toBeDefined();
+    const identityTools = zonesArg!.find((z) => z.id === 'identity')?.tools ?? [];
+    // Keycloak hat einen services.keycloak.name-Eintrag („Keycloak SSO“) — die
+    // Szene bekommt den lokalisierten Namen, nicht die rohe Id.
+    const kc = identityTools.find((t) => t.id === 'keycloak');
+    expect(kc).toBeDefined();
+    expect(kc!.name).not.toBe('🔐 keycloak');
+    expect(kc!.name).toContain('Keycloak SSO');
+  });
+
+  it('lokalisiert Staff-Tool-Namen beim Sprachwechsel (services.<id>.name)', async () => {
+    renderScene();
+    await waitFor(() => expect(sceneMock).toHaveBeenCalled());
+    const staffFirst = (() => {
+      const { staff } = sceneMock.mock.lastCall?.[3] as { staff: { tools: { name: string }[] } | null };
+      return staff?.tools[0]?.name;
+    })();
+    expect(staffFirst).toBeDefined();
+    await i18n.changeLanguage('de');
+    await waitFor(() => expect(sceneMock.mock.calls.length).toBeGreaterThan(1));
+    const staffSecond = (() => {
+      const { staff } = sceneMock.mock.lastCall?.[3] as { staff: { tools: { name: string }[] } | null };
+      return staff?.tools[0]?.name;
+    })();
+    expect(staffSecond).toBeDefined();
+    await i18n.changeLanguage('en'); // Test-Suite bleibt auf en.
+  });
+
+  it('wechselt im Vollbild das Rotationstempo OHNE die Szene neu zu bauen (Optimierung)', async () => {
+    renderScene();
+    await waitFor(() => expect(sceneMock).toHaveBeenCalled());
+    expect(sceneMock.mock.calls.length).toBe(1);
+    const handle = sceneInstances[sceneInstances.length - 1];
+    expect(handle).toBeDefined();
+    // Sync ab hier: nur noch setEmbedded-Rufe auf dem bereits gebauten Handle.
+    handle.setEmbedded.mockClear();
+
     fireEvent.click(screen.getByRole('button', { name: 'Enlarge' }));
-    await waitFor(() => expect(sceneMock.mock.calls.length).toBe(2));
-    expect(sceneMock.mock.lastCall?.[3]).toMatchObject({ embedded: false });
-    expect(sceneMock.mock.lastCall?.[3]?.staff).toBeDefined();
-    // Beim Neuaufbau laedt die Szene erneut kurz — am Ende ist der Indikator
-    // wieder weg und die Flaeche nie leer.
-    await waitFor(() => expect(screen.queryByTestId('workplace-loading')).toBeNull());
+    // Kein Neuaufbau: weiterhin genau EIN createWorkplaceScene-Aufruf.
+    expect(sceneMock.mock.calls.length).toBe(1);
+    // Stattdessen: Rotationstempo-Wechsel auf das Vollbild-Profil (embedded: false).
+    expect(handle.setEmbedded).toHaveBeenCalledWith(false);
+
+    // Zurück in die Einbettung — wieder nur Tempo-Wechsel, kein Rebuild.
+    fireEvent.click(screen.getByRole('button', { name: 'Shrink' }));
+    expect(sceneMock.mock.calls.length).toBe(1);
+    expect(handle.setEmbedded).toHaveBeenCalledWith(true);
+    // Kein Lade-Flash: Indikator blieb die ganze Zeit verschwunden.
+    expect(screen.queryByTestId('workplace-loading')).toBeNull();
     expect(screen.getByTestId('workplace-canvas')).toBeInTheDocument();
   });
 });

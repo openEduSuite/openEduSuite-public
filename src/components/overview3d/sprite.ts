@@ -29,6 +29,26 @@ interface LabelOpts {
 /** Überabtastung der Label-Canvas: 3x zeichnen, gleiche Weltgröße = scharf. */
 export const LABEL_SUPERSAMPLE = 3;
 
+// --- Textur-Cache für Sprite-Labels (Optimierung) -------------------------
+// Gleiche Textur (gleicher Text/Emoji + Opts) wird nur EINMAL gerendert und
+// über alle Szenen-Instanzen geteilt: beim Sprachnwechsel/Neuaufbau entsteht
+// keine neue Canvas-Textur mehr für unveränderte Labels/Icons. Die Einträge
+// leben modulweit (bounded: eine Textur pro eindeutigem Label/Icon), das
+// Szenen-Dispose überspringt sie über den CACHED_TEXTURE-Marker.
+const textTextureCache = new Map<string, { tex: THREE.CanvasTexture; w: number; h: number }>();
+const iconTextureCache = new Map<string, { tex: THREE.CanvasTexture; size: number }>();
+
+/** Marker (string): geteilte Texturen im Szenen-Dispose NICHT freigeben. */
+export const CACHED_TEXTURE = '__tprsCachedTexture';
+
+/** Für HMR/Tests: alle geteilten Label-/Icon-Texturen freigeben. */
+export function clearSpriteTextureCache(): void {
+  for (const { tex } of textTextureCache.values()) tex.dispose();
+  for (const { tex } of iconTextureCache.values()) tex.dispose();
+  textTextureCache.clear();
+  iconTextureCache.clear();
+}
+
 function applyTextStyle(ctx: CanvasRenderingContext2D, fontSize: number) {
   ctx.font = `600 ${fontSize}px system-ui, sans-serif`;
 }
@@ -86,7 +106,10 @@ function makeSpriteTexture(canvas: HTMLCanvasElement, anisotropy = 1): THREE.Can
   return tex;
 }
 
-/** Text-Sprite (Name/Galerie-Beschriftung) mit optionalem Pill-Hintergrund. */
+/** Text-Sprite (Name/Galerie-Beschriftung) mit optionalem Pill-Hintergrund.
+ *  Kanvas-Textur wird modulweit gecacht (CACHED_TEXTURE) — gleiche Labels
+ *  werden über Szenen-/Sprachnwechsel hinweg geteilt, nur das (billige)
+ *  SpriteMaterial ist pro Aufruf frisch. */
 export function makeTextSprite(text: string, opts: LabelOpts & { anisotropy?: number } = {}): THREE.Sprite {
   const o = {
     color: opts.color ?? '#dfe8ff',
@@ -95,8 +118,18 @@ export function makeTextSprite(text: string, opts: LabelOpts & { anisotropy?: nu
     pad: opts.pad ?? 10,
     halo: opts.halo ?? true,
   };
-  const [canvas, w, h] = makeCanvas(text, o);
-  const tex = makeSpriteTexture(canvas, opts.anisotropy ?? 1);
+  // Fingerabdruck nur aus Kanvas-relevanten OpTs (nicht scale/opacity/fog —
+  // die ändern Material/Render, aber nicht die Textur).
+  const key = JSON.stringify([text, o.color, o.bg, o.fontSize, o.pad, o.halo, opts.anisotropy ?? 1]);
+  let entry = textTextureCache.get(key);
+  if (!entry) {
+    const [canvas, w, h] = makeCanvas(text, o);
+    const tex = makeSpriteTexture(canvas, opts.anisotropy ?? 1);
+    tex.userData[CACHED_TEXTURE] = true;
+    entry = { tex, w, h };
+    textTextureCache.set(key, entry);
+  }
+  const { tex, w, h } = entry;
   const mat = new THREE.SpriteMaterial({
     map: tex,
     transparent: true,
@@ -111,23 +144,33 @@ export function makeTextSprite(text: string, opts: LabelOpts & { anisotropy?: nu
   return sprite;
 }
 
-/** Emoji-Icon-Sprite (Zone/Tool) — Emojis rendern in Canvas nativ. */
+/** Emoji-Icon-Sprite (Zone/Tool) — Emojis rendern in Canvas nativ. Nach der
+ *  Lösch-Sache: Textur modulweit gecacht (CACHED_TEXTURE). */
 export function makeIconSprite(
   emoji: string,
   opts: { size?: number; scale?: number; opacity?: number; anisotropy?: number } = {},
 ): THREE.Sprite {
-  const fontSize = (opts.size ?? 64) * LABEL_SUPERSAMPLE;
-  const canvas = document.createElement('canvas');
-  canvas.width = fontSize;
-  canvas.height = fontSize;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.font = `${fontSize}px system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, fontSize / 2, fontSize / 2 + 2 * LABEL_SUPERSAMPLE);
+  const size = opts.size ?? 64;
+  const key = JSON.stringify([emoji, size, opts.anisotropy ?? 1]);
+  let entry = iconTextureCache.get(key);
+  if (!entry) {
+    const fontSize = size * LABEL_SUPERSAMPLE;
+    const canvas = document.createElement('canvas');
+    canvas.width = fontSize;
+    canvas.height = fontSize;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.font = `${fontSize}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, fontSize / 2, fontSize / 2 + 2 * LABEL_SUPERSAMPLE);
+    }
+    const tex = makeSpriteTexture(canvas, opts.anisotropy ?? 1);
+    tex.userData[CACHED_TEXTURE] = true;
+    entry = { tex, size: fontSize };
+    iconTextureCache.set(key, entry);
   }
-  const tex = makeSpriteTexture(canvas, opts.anisotropy ?? 1);
+  const { tex, size: fontSize } = entry;
   const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: opts.opacity ?? 1 });
   const sprite = new THREE.Sprite(mat);
   const s = (opts.scale ?? 0.016) / LABEL_SUPERSAMPLE;

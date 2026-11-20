@@ -269,6 +269,11 @@ probes:
       url: https://ollama-ui.example.org/
       severity: warning
       category: education
+    # LiteLLM-Gateway (in-cluster, health check via http_alive → 200)
+    - name: litellm
+      url: http://litellm.llm.svc.cluster.local:4000/health
+      severity: warning
+      category: education
 
     # Deprecated/legacy (kept for monitoring until decommissioned)
     - name: dify

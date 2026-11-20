@@ -46,7 +46,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { LABEL_SUPERSAMPLE, makeIconSprite, makeTextSprite } from './sprite';
+import { LABEL_SUPERSAMPLE, CACHED_TEXTURE, makeIconSprite, makeTextSprite } from './sprite';
 import {
   PIXEL_RATIO_CAP,
   PIXEL_RATIO_FLOOR,
@@ -86,6 +86,10 @@ export interface SceneCallbacks {
 export interface WorkplaceSceneHandle {
   dispose(): void;
   setAutoRotate(v: boolean): void;
+  /** Wechselt den Ansichtsmodus (embedded = dezenteres Rotationstempo) OHNE
+   *  die Szene neu zu bauen — Vollbild-/Einbettungs-Toggle wird so billig
+   *  (kein Neu-Rendern aller Label-Canvases, keine Allokationen). */
+  setEmbedded(embedded: boolean): void;
   resize(): void;
   /** Sanfte Kamerafahrt zurück zur Gesamtübersicht (reduced motion: sofort). */
   resetView(): void;
@@ -105,6 +109,14 @@ export interface CreateSceneOptions {
   /** Label des pickbaren Zentralmonuments (reduziert für Hover-Tooltip). */
   monumentLabel?: string;
 }
+// --- Nur nutzerorientierte Dienste in der 3D-Szene -------------------------
+// Filter + Deny-Listen leben im drei-freien Modul `./userFacing` (siehe dort) —
+// so bleibt die WebGL-Szene lazy ladbar (kein statischer Runtime-Import).
+export {
+  NON_USER_FACING_SERVICE_IDS,
+  NON_USER_FACING_CATEGORIES,
+  filterUserFacingZones,
+} from './userFacing';
 
 // --- Raum-Maße (goldener Schnitt, gedämpft für Einbettung) ------------------
 const PHI = 1.6180339887;
@@ -135,11 +147,11 @@ export function academiaRowAlpha(rowIndex: number): number {
   return ACADEMIA_OPACITY * (ACADEMIA_PROFILE[rowIndex] ?? 0.5);
 }
 
-// T-PRS-04: großzügigere Abstände — Stationen und Tools dürfen sich nicht
-// ineinander schieben (ZONE_R 9.2 -> 11, TOOL_R 5.6 -> 6.6, TOOL_SPAN
-// 0.62 -> 0.8), der Raum wächst mit, damit die Stationen Wandfreiheit behalten.
-const ZONE_R = 11; // Ring-Radius der Zonen-Stationen
-const TOOL_R = 6.6; // Ring-Radius der Tool-Objekte (zwischen Zentrum u. Station)
+// T-PRS-04 + Überarbeitung: großzügigere Abstände und proportionale Sektoren —
+// ZONE_R 11 -> 11.5, TOOL_R 6.6 -> 7.0 (TOOL_SPAN bleibt 0.8); der Raum wächst
+// mit, damit Stationen/Tools Wandfreiheit behalten.
+const ZONE_R = 11.5; // Ring-Radius der Zonen-Stationen
+const TOOL_R = 7.0; // Ring-Radius der Tool-Objekte (zwischen Zentrum u. Station)
 const TOOL_SPAN = 0.8; // Winkel-Halbbreite des Tool-Fächers je Zone
 const TOOL_GAP = 1.5; // Mindest-Abstand zwischen zwei Tool-Zentren
 const FAN_MARGIN = 0.08; // Winkel-Freiraum zwischen Nachbar-Fächern
@@ -151,9 +163,9 @@ const STATION_LABEL_TOP_Y = 3.4; // Label-Oberkante (für Kamera-Framing)
 // Standardkamera: rahmt den erweiterten Ring (inkl. Labels) auch in schmalen
 // Aspect-Ratios vollständig ein (Beweis: scene.test.ts projiziert den Ring).
 const CAM_FOV = 55;
-const CAM_POS: [number, number, number] = [0, 13, 29];
+const CAM_POS: [number, number, number] = [0, 13.5, 30.5];
 const CAM_LOOK: [number, number, number] = [0, 2, 0];
-const CAM_MAX_DIST = 60;
+const CAM_MAX_DIST = 62;
 const CAM_FAR = 200;
 // Nebel beginnt erst hinter der Rückwand-Beschriftung, damit der In-Szene-Titel
 // nicht ausgelöscht wird (Distanz Kamera -> Titel ≈ 44).
@@ -182,12 +194,21 @@ const STAFF_LABEL_Y = 2.6; // Label-Höhe der Staff-Station
 // den Raum. ROOM_INNER liegt AUßERHALB jedes Tool-Fächers (max TOOL_R-8.65),
 // damit keine Wand ein Tool berührt — der Staff-Kreis (radius 4.6) bleibt im
 // freien Innenhof vor den Wänden.
-const ROOM_INNER = 9.6; // innerer Start der Trennwände
+// Themen-Räume: Sektor-Buchten entlang der Außenwand (proportionale Sektoren).
+// Jedes Themen-Zimmer (Kategorie) ist eine Bucht: zwei radiale Trennwände an den
+// Sektorgrenzen (Beginn ROOM_INNER, reichen bis zur Raumhülle) schließen die
+// Station samt Tools ein; ein dezenter Boden-Teppich in Zonenfarbe markiert den
+// Raum. ROOM_INNER liegt AUẞERHALB jedes Tool-Fächers und der Stations-Symbole
+// (strukturell: Zone + Bodenring + Freiraum) — Kategorie-Icons können die
+// Trennwände („Pillars“) nicht mehr schneiden (kein Glitch, nicht nur Wandhöhe).
+// ROOM_INNER = ZONE_R + STATION_RING_R + 0.8 = 13.95.
+const ROOM_INNER = ZONE_R + STATION_RING_R + 0.8; // innerer Start der Trennwände
+const CARPET_INNER = ZONE_R - 2.0; // Innenradius des Boden-Teppichs (9.5)
 // Wandhöhe: absichtlich niedrig — UNTERHALB der Stations-Icon-Unterkante
 // (Icon-Zentrum 2.15, Halbhöhe 84*0.02/2=0.84 => Unterkante 1.31). Damit
-// kämmen sich die schwebenden Icons/Labels nie mit den Trennwänden („Pillars") —
+// kämmen sich die schwebenden Icons/Labels nie mit den Trennwänden („Pillars“) —
 // vorher (3.2) verschluckte die Wand die untere Icon-Hälfte, sobald eine
-// Station nahe einer Sektorgrenze stand. Tools stehen bei TOOL_R=6.6 und damit
+// Station nahe einer Sektorgrenze stand. Tools stehen bei TOOL_R=7.0 und damit
 // ohnehin innerhalb von ROOM_INNER, also außerhalb des Wandbands.
 const ROOM_H = 1.25; // Wandhöhe (niedrig, Sicht bleibt offen)
 const ROOM_T = 0.14; // Wandstärke
@@ -214,6 +235,7 @@ export const SCENE_METRICS = {
   },
   rooms: {
     innerRadius: ROOM_INNER,
+    carpetInnerRadius: CARPET_INNER,
     wallHeight: ROOM_H,
     wallThickness: ROOM_T,
   },
@@ -260,29 +282,51 @@ export const TOOL_MATERIAL_PRESETS = [
   { metalness: 0.12, roughness: 0.45, emissiveIntensity: 0.32 }, // Kugel
 ] as const;
 
-/** Winkel der Zonen-Station `index` auf dem Zonen-Ring (Start «hinten»). */
-export function zoneAngle(index: number, count: number): number {
-  const n = Math.max(count, 1);
-  return (index / n) * Math.PI * 2 - Math.PI / 2;
-}
-
-/** Boden-Position (x|z) der Zonen-Station `index`. */
-export function stationPosition(index: number, count: number): { x: number; z: number } {
-  const a = zoneAngle(index, count);
-  return { x: Math.cos(a) * ZONE_R, z: Math.sin(a) * ZONE_R };
-}
-
-/** Winkel-Bogen (Sektor), der einer Zone auf dem Ring zusteht. */
-export function zoneSectorAngle(zoneCount: number): number {
-  return (Math.PI * 2) / Math.max(zoneCount, 1);
+/** Gewicht einer Zone proportional zur Tool-Zahl (Minimum 1): 1 + Tool-Zahl. */
+export function zoneWeight(toolCount: number): number {
+  return 1 + Math.max(toolCount, 0);
 }
 
 /**
- * Winkel-Halbbreite des Tool-Fächers: so breit wie möglich (TOOL_SPAN), aber
- * nie über den eigenen Sektor hinaus — nur so kollidieren Nachbar-Fächer nie.
+ * Proportionale Sektoren: Startwinkel je Zone aus den Gewichten. Die Summe
+ * der Sektoren ergibt immer den vollen Kreis (2π); Start bleibt „hinten“
+ * (-π/2), damit die erste Station hinter dem Desk beginnt wie bisher.
  */
-export function toolFanSpan(zoneCount: number): number {
-  return Math.min(TOOL_SPAN, zoneSectorAngle(zoneCount) / 2 - FAN_MARGIN);
+export function zoneStartAngles(weights: readonly number[]): number[] {
+  const total = weights.reduce((sum, w) => sum + Math.max(w, 0), 0) || 1;
+  const starts: number[] = [];
+  let acc = -Math.PI / 2;
+  for (const w of weights) {
+    starts.push(acc);
+    acc += (Math.max(w, 0) / total) * Math.PI * 2;
+  }
+  return starts;
+}
+
+/** Winkel der Zonen-Station `index` (Mitte ihres proportionalen Sektors). */
+export function stationAngle(angles: readonly number[], index: number): number {
+  return angles[index] + zoneSectorAngle(angles, index) / 2;
+}
+
+/** Boden-Position (x|z) der Zonen-Station `index`. */
+export function stationPosition(angles: readonly number[], index: number): { x: number; z: number } {
+  const a = stationAngle(angles, index);
+  return { x: Math.cos(a) * ZONE_R, z: Math.sin(a) * ZONE_R };
+}
+
+/** Winkel-Bogen (Sektor) der Zone `index` aus den proportionalen Startwinkeln. */
+export function zoneSectorAngle(angles: readonly number[], index: number): number {
+  const n = angles.length;
+  if (n === 0) return Math.PI * 2;
+  const next = angles[(index + 1) % n] + (index === n - 1 ? Math.PI * 2 : 0);
+  return next - angles[index];
+}
+
+/** Winkel-Halbbreite des Tool-Fächers der Zone `index`: so breit wie möglich
+ *  (TOOL_SPAN), aber nie über den eigenen proportionalen Sektor hinaus — nur
+ *  so kollidieren Nachbar-Fächer nie. */
+export function toolFanSpan(angles: readonly number[], index: number): number {
+  return Math.min(TOOL_SPAN, zoneSectorAngle(angles, index) / 2 - FAN_MARGIN);
 }
 
 /**
@@ -291,8 +335,8 @@ export function toolFanSpan(zoneCount: number): number {
  * (dokumentiert/überprüft in scene.test.ts), aber immer mit Freiraum zur
  * eigenen Station.
  */
-export function toolRingRadius(toolCount: number, zoneCount: number): number {
-  const span = toolFanSpan(zoneCount);
+export function toolRingRadius(toolCount: number, angles: readonly number[], index: number): number {
+  const span = toolFanSpan(angles, index);
   const step = toolCount > 1 ? (2 * span) / (toolCount - 1) : 0;
   const needed = step > 0 ? TOOL_GAP / (2 * Math.sin(step / 2)) : TOOL_R;
   const max = ZONE_R - STATION_RING_R - TOOL_CLEAR;
@@ -301,15 +345,15 @@ export function toolRingRadius(toolCount: number, zoneCount: number): number {
 
 /** Boden-Position (x|z) eines Tools im Fächer seiner Zone. */
 export function toolPosition(
+  angles: readonly number[],
   zoneIndex: number,
-  zoneCount: number,
   toolIndex: number,
   toolCount: number,
 ): { x: number; z: number } {
-  const span = toolFanSpan(zoneCount);
-  const radius = toolRingRadius(toolCount, zoneCount);
+  const span = toolFanSpan(angles, zoneIndex);
+  const radius = toolRingRadius(toolCount, angles, zoneIndex);
   const t = toolCount > 1 ? -span + (2 * span * toolIndex) / (toolCount - 1) : 0;
-  const a = zoneAngle(zoneIndex, zoneCount) + t;
+  const a = stationAngle(angles, zoneIndex) + t;
   return { x: Math.cos(a) * radius, z: Math.sin(a) * radius };
 }
 
@@ -344,11 +388,12 @@ export function hullRadiusAt(a: number): number {
 }
 
 /**
- * Winkel der Sektorgrenze NACH Station `index` (Mitte zwischen Station i und
- * ihrem Nachbarn) — dort steht die Trennwand zwischen den Themen-Räumen.
+ * Winkel der Sektorgrenze NACH Station `index` (Start des Nachbar-Sektors) —
+ * dort steht die Trennwand zwischen den Themen-Räumen.
  */
-export function roomBoundaryAngle(index: number, zoneCount: number): number {
-  return zoneAngle(index, zoneCount) + zoneSectorAngle(zoneCount) / 2;
+export function roomBoundaryAngle(angles: readonly number[], index: number): number {
+  const n = angles.length;
+  return angles[(index + 1) % n] + (index === n - 1 ? Math.PI * 2 : 0);
 }
 
 /**
@@ -357,8 +402,8 @@ export function roomBoundaryAngle(index: number, zoneCount: number): number {
  * (für rotation.y = -angle, damit die Wandlänge radial verläuft).
  */
 export function roomWallTransform(
+  angles: readonly number[],
   index: number,
-  zoneCount: number,
 ): {
   angle: number;
   innerRadius: number;
@@ -366,9 +411,10 @@ export function roomWallTransform(
   inner: { x: number; z: number };
   outer: { x: number; z: number };
 } {
-  const a = roomBoundaryAngle(index, zoneCount);
+  const a = roomBoundaryAngle(angles, index);
   const innerR = ROOM_INNER;
-  const outerR = Math.max(innerR + 3, hullRadiusAt(a) - 0.35);
+  // Außenende: bis kurz vor die Hülle (mindestens 1 Einheit Wandlänge).
+  const outerR = Math.max(innerR + 1, hullRadiusAt(a) - 0.35);
   return {
     angle: a,
     innerRadius: innerR,
@@ -382,9 +428,9 @@ export function roomWallTransform(
  * Äußerer Radius des Raums `index` (Teppich reicht bis zur Hülle entlang der
  * Raum-Mitte, gemessen auf halber Sektorhöhe).
  */
-export function roomOuterRadius(index: number, zoneCount: number): number {
-  const mid = zoneAngle(index, zoneCount);
-  return Math.max(ROOM_INNER + 3, hullRadiusAt(mid) - 0.35);
+export function roomOuterRadius(angles: readonly number[], index: number): number {
+  const mid = stationAngle(angles, index);
+  return Math.max(CARPET_INNER + 0.5, hullRadiusAt(mid) - 0.35);
 }
 
 /** Prozeduraler Hintergrund-Verlauf (Canvas-Gradient) — kein Asset nötig. */
@@ -412,19 +458,67 @@ function makeBackgroundTexture(): THREE.CanvasTexture {
 let academiaImage: HTMLImageElement | null | 'loading' = null;
 const academiaWaiters: Array<(img: HTMLImageElement | null) => void> = [];
 
+// Die fertige Hintergrund-Textur (Verlauf + Akademie-Symbolik) modulweit geteilt
+// — alle Szene-Instanzen nutzen dieselbe Textur statt sie pro Aufbau neu zu
+// rendern (Optimierung: ein Canvas + eine GPU-Textur für die ganze Sitzung).
+let sharedAcademiaTexture: THREE.CanvasTexture | null = null;
+
 /** Lädt die Akademie-SVG einmalig (modulweit gecacht) und informiert Wartende. */
 function loadAcademiaImage(): Promise<HTMLImageElement | null> {
   if (academiaImage !== 'loading') return Promise.resolve(academiaImage);
   return new Promise((resolve) => academiaWaiters.push(resolve));
 }
 
+/** Rendert die geteilte Akademie-Textur EINMAL aus dem geladenen Bild. */
+function renderSharedAcademiaTexture(img: HTMLImageElement): THREE.CanvasTexture | null {
+  if (sharedAcademiaTexture) return sharedAcademiaTexture;
+  if (typeof document === 'undefined') return null; // SSR / jsdom
+  const cols = 8;
+  const rows = ACADEMIA_PROFILE.length;
+  const w = ACADEMIA_TILE * cols;
+  const h = ACADEMIA_TILE * rows;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  // 1) Verlauf wie bisher (identische Stopps wie makeBackgroundTexture).
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, BG_TOP);
+  grad.addColorStop(0.55, `#${new THREE.Color(BG_MID).getHexString()}`);
+  grad.addColorStop(1, BG_BOTTOM);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  // 2) Akademie-Kacheln mit vertikalem Ausblend-Profil.
+  for (let r = 0; r < rows; r++) {
+    ctx.globalAlpha = academiaRowAlpha(r);
+    for (let c = 0; c < cols; c++) {
+      ctx.drawImage(img, c * ACADEMIA_TILE, r * ACADEMIA_TILE, ACADEMIA_TILE, ACADEMIA_TILE);
+    }
+  }
+  ctx.globalAlpha = 1;
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
+  sharedAcademiaTexture = tex;
+  return tex;
+}
+
 /**
  * Legt die Akademie-Symbolik über den Verlauf: 8×3 Kacheln (damit die Motive
  * auf breiten Ansichten annähernd quadratisch bleiben), subtil und nach oben/
  * unten hin ausgedünnt. Tauscht scene.background; scheitert das Laden, bleibt
- * der reine Verlauf (progressive enhancement).
+ * der reine Verlauf (progressive enhancement). Nutzt die geteilte Textur.
  */
 function decorateBackgroundWithAcademia(scene: THREE.Scene, base: THREE.CanvasTexture): void {
+  // Bereits gerendert? Sofort teilen und den per-Szene-Verlauf freigeben.
+  if (sharedAcademiaTexture) {
+    scene.background = sharedAcademiaTexture;
+    base.dispose();
+    return;
+  }
   if (academiaImage === null) {
     // Erstkontakt: Bild-Load anstoßen und danach nachziehen.
     academiaImage = 'loading';
@@ -442,37 +536,11 @@ function decorateBackgroundWithAcademia(scene: THREE.Scene, base: THREE.CanvasTe
   }
   void loadAcademiaImage().then((img) => {
     if (!img) return;
-    const cols = 8;
-    const rows = ACADEMIA_PROFILE.length;
-    const w = ACADEMIA_TILE * cols;
-    const h = ACADEMIA_TILE * rows;
-    const canvas = document.createElement('canvas');
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    // 1) Verlauf wie bisher (identische Stopps wie makeBackgroundTexture).
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, BG_TOP);
-    grad.addColorStop(0.55, `#${new THREE.Color(BG_MID).getHexString()}`);
-    grad.addColorStop(1, BG_BOTTOM);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-    // 2) Akademie-Kacheln mit vertikalem Ausblend-Profil.
-    for (let r = 0; r < rows; r++) {
-      ctx.globalAlpha = academiaRowAlpha(r);
-      for (let c = 0; c < cols; c++) {
-        ctx.drawImage(img, c * ACADEMIA_TILE, r * ACADEMIA_TILE, ACADEMIA_TILE, ACADEMIA_TILE);
-      }
+    const tex = renderSharedAcademiaTexture(img);
+    if (tex) {
+      scene.background = tex;
+      base.dispose();
     }
-    ctx.globalAlpha = 1;
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
-    scene.background = tex;
-    base.dispose();
   });
 }
 
@@ -772,8 +840,11 @@ export function createWorkplaceScene(
   pickEntries.push(monumentEntry);
 
   const N = zones.length || 1;
+  // Proportionale Sektoren: Startwinkel je Zone aus den Tool-Gewichten — volle
+  // Zonen (z. B. «Produktivität») bekommen mehr Winkel-Raum als Ein-Tool-Zonen.
+  const angles = zoneStartAngles(zones.map((z) => zoneWeight(z.tools.length)));
   zones.forEach((zone, i) => {
-    const { x: sx, z: sz } = stationPosition(i, N);
+    const { x: sx, z: sz } = stationPosition(angles, i);
     const color = new THREE.Color(zone.color);
 
     // Station: Grundplatte + Glow-Ring + Sockel + Icon + Label (#2).
@@ -837,7 +908,7 @@ export function createWorkplaceScene(
     // Tools der Zone: Fächer um die Stations-Achse auf innerem Ring.
     const tools = zone.tools;
     tools.forEach((tool, j) => {
-      const { x: tx, z: tz } = toolPosition(i, N, j, tools.length);
+      const { x: tx, z: tz } = toolPosition(angles, i, j, tools.length);
       const toolGroup = new THREE.Group();
 
       const plinth2 = new THREE.Mesh(toolPlinthGeo, toolPlinthMat);
@@ -1003,17 +1074,19 @@ export function createWorkplaceScene(
   // Trennwände an beiden Sektorgrenzen. Die Wände beginnen AUßERHALB aller
   // Tool-Fächer (ROOM_INNER > max. Tool-Radius) und erreichen die Hülle.
   zones.forEach((zone, i) => {
-    const carpetOuter = roomOuterRadius(i, N);
+    // Teppich: RingSegment von CARPET_INNER bis zur Raumhülle, deckt exakt
+    // den proportionalen Sektor der Zone ab.
+    const carpetOuter = roomOuterRadius(angles, i);
     const carpetGeo = track(
       new THREE.RingGeometry(
-        ROOM_INNER - 0.35,
+        CARPET_INNER,
         carpetOuter,
         56,
         1,
         // RingGeometry zeichnet Theta CCW ab +X (unsere Welt: z = -sin θ),
         // deshalb thetaStart = -Grenze der Räume (decken exakt die Sektor-Bucht).
-        -roomBoundaryAngle(i, N),
-        zoneSectorAngle(N),
+        -roomBoundaryAngle(angles, i),
+        zoneSectorAngle(angles, i),
       ),
     );
     const carpetMat = track(
@@ -1033,7 +1106,7 @@ export function createWorkplaceScene(
     scene.add(carpet);
   });
   for (let i = 0; i < N; i++) {
-    const w = roomWallTransform(i, N);
+    const w = roomWallTransform(angles, i);
     const len = w.outerRadius - w.innerRadius;
     const wallGeo = track(new THREE.BoxGeometry(len, ROOM_H, ROOM_T));
     const wallMat = track(
@@ -1105,6 +1178,9 @@ export function createWorkplaceScene(
   };
 
   let needsRender = true;
+  // Letzte an den Renderer gemeldete Größe (Resize-No-op-Guard).
+  let lastRenderW = container.clientWidth || 800;
+  let lastRenderH = container.clientHeight || 480;
 
   const clearHover = () => {
     if (hoveredEntry) {
@@ -1394,6 +1470,12 @@ export function createWorkplaceScene(
   const ro = new ResizeObserver(() => {
     const w = container.clientWidth || 800;
     const h = container.clientHeight || 480;
+    // No-op-Guard: während CSS-Übergängen (z. B. Vollbild-Fade) feuert der
+    // Observer mehrfach mit unveränderter Größe — setSize/Aspect/wake dann
+    // überspringen (kein unnötiges Re-Render + keine Projektions-Updates).
+    if (w === lastRenderW && h === lastRenderH) return;
+    lastRenderW = w;
+    lastRenderH = h;
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -1423,7 +1505,10 @@ export function createWorkplaceScene(
         const mat = obj.material as THREE.Material | THREE.Material[] | undefined;
         const disposeMat = (m: THREE.Material) => {
           const map = (m as THREE.MeshStandardMaterial).map ?? (m as THREE.SpriteMaterial).map;
-          map?.dispose();
+          // Geteilte Cache-Texturen (CACHED_TEXTURE) überspringen — sie werden
+          // von allen Szenen-Instanzen genutzt und zentral in clearSpriteTextureCache
+          // freigegeben; hier zu disposen würde andere Szenen zerbrechen.
+          if (map && !map.userData[CACHED_TEXTURE]) map.dispose();
           m.dispose();
         };
         if (Array.isArray(mat)) mat.forEach(disposeMat);
@@ -1436,6 +1521,14 @@ export function createWorkplaceScene(
     },
     setAutoRotate(v: boolean) {
       controls.autoRotate = v;
+      wake();
+    },
+    setEmbedded(embedded: boolean) {
+      // Identisch zum Build-Zeitpunkt: Rotationsprofil je Ansichtsmodus. Auch
+      // autoRotate zurücksetzen wie beim Neubau, damit Expand nach Interaktion
+      // die dezente Start-Rotation wieder aufnimmt (exakt alte Semantik).
+      controls.autoRotate = prefs.autoRotate;
+      controls.autoRotateSpeed = autoRotateSpeed(prefs, embedded);
       wake();
     },
     resize() {

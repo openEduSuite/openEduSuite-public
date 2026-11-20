@@ -33,21 +33,30 @@ describe('Home (portal)', () => {
     // Signed out: no service tiles and no account link anywhere.
     expect(screen.queryByTestId('section-dienste')).not.toBeInTheDocument();
     expect(document.querySelectorAll('a[href*="account"]').length).toBe(0);
-    // Landing-Ansicht: neue Projektübersicht-Grafik statt Bird's-Eye-Foto.
+    // Öffentliche Landing ohne three.js: keine interaktive 3D-Szene und kein
+    // WebGL-Fallback — stattdessen die Kunstgalerie (SVG-Poster im Stil großer
+    // Künstler:innen); Picassos Projektübersicht bleibt die erste Folie.
+    expect(screen.queryByTestId('overview-3d')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('overview-fallback')).not.toBeInTheDocument();
+    expect(screen.getByTestId('art-gallery')).toBeInTheDocument();
     expect(screen.getByAltText(/Projektübersicht/).getAttribute('src')).toBe('/brand/landing-overview.svg');
   });
 
-  it('shows the 3D workplace teaser only for anonymous visitors', async () => {
-    // T-PRS-04: der 3D-«Arbeitsplatz» ist der anonyme Teaser-Einstieg —
-    // /oauth2/auth 401 => 3D-Szene sichtbar (jsdom: SVG-Fallback), dafür
-    // KEINE Dienstkacheln und keine Such-/Filterleiste.
+  it('keeps the public landing free of the 3D scene (tiles = portal default)', async () => {
+    // Die three.js-Szene ist von der öffentlichen Startseite entfernt: anonyme
+    // Besucher sehen statt des interaktiven 3D-Teasers die Kunstgalerie (ohne
+    // WebGL-Fallback) — die Kachel-Ansicht ist die Default-Ansicht des
+    // (eingeloggten) Portals, die Sign-out-Landing bleibt ohne Dienste
+    // (Galerie + Widgets + Login-CTA).
     renderHome();
-    await waitFor(() => expect(screen.getByTestId('overview-3d')).toBeInTheDocument());
-    expect(screen.getByTestId('overview-fallback')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('widgets-row')).toBeInTheDocument());
+    expect(screen.getByTestId('art-gallery')).toBeInTheDocument();
+    expect(screen.queryByTestId('overview-3d')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('overview-fallback')).not.toBeInTheDocument();
     expect(screen.queryByTestId('workplace-canvas')).not.toBeInTheDocument();
     expect(screen.queryByTestId('service-search')).not.toBeInTheDocument();
     expect(screen.queryByTestId('section-dienste')).not.toBeInTheDocument();
-    // Kein Kacheln/3D-Toggle für anonyme Besucher:innen (nur der Teaser).
+    // Kein Kacheln/3D-Toggle für anonyme Besucher:innen.
     expect(screen.queryByTestId('view-toggle')).not.toBeInTheDocument();
   });
 
@@ -65,7 +74,8 @@ describe('Home (portal)', () => {
 
   it('shows calendar and news feeds on the signed-out landing page', async () => {
     // Widgets (Wetter/News/Kalender) sind keine geschützten Dienste — sie
-    // rendern für jeden Besucher, auch abgemeldet, unter der Projektgrafik.
+    // rendern für jeden Besucher, auch abgemeldet, auf der öffentlichen
+    // Landing-Seite (ohne 3D-Teaser).
     renderHome();
     await waitFor(() => expect(screen.getByTestId('widgets-row')).toBeInTheDocument());
     expect(screen.getByTestId('feed-news')).toBeInTheDocument();
@@ -116,12 +126,12 @@ describe('Home (portal)', () => {
     expect(screen.queryByTestId('landscape-overview')).not.toBeInTheDocument();
   });
 
-  it('keeps the anonymous landing page free of decision nav and landscape (T-PRS-04)', async () => {
-    // Anonym bleibt es beim 3D-Teaser: keine Entscheiderebene-Navigation und
-    // keine eingebettete 2D-Landscape — die Integration (T-PRS-07) baut die
-    // T-PRS-04-Bedingung (3D nur ohne Login) nicht zurück.
+  it('keeps the anonymous landing page free of decision nav and landscape', async () => {
+    // Öffentliche Landing: Kunstgalerie statt 3D, keine
+    // Entscheiderebene-Navigation und keine eingebettete 2D-Landscape.
     renderHome();
-    await waitFor(() => expect(screen.getByTestId('overview-3d')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('art-gallery')).toBeInTheDocument());
+    expect(screen.queryByTestId('overview-3d')).not.toBeInTheDocument();
     expect(screen.queryByTestId('decision-nav')).not.toBeInTheDocument();
     expect(screen.queryByTestId('home-landscape')).not.toBeInTheDocument();
     expect(screen.queryByTestId('landscape-overview')).not.toBeInTheDocument();
@@ -309,8 +319,9 @@ describe('Home (portal)', () => {
       await waitFor(() =>
         expect(screen.getByText('Logout').getAttribute('href')).toBe('/oauth2/sign_out'),
       );
-      // T-PRS-04: der 3D-«Arbeitsplatz» ist der anonyme Teaser — eingeloggt
-      // bleibt es beim klassischen Dashboard: keine 3D-Szene, kein SVG-Fallback.
+      // Der 3D-Arbeitsplatz ist nur per ?view=workplace erreichbar (eingeloggt
+      // bleibt es im Kacheln-Default des Dashboards: keine 3D-Szene, kein
+      // WebGL-SVG-Fallback).
       expect(screen.queryByTestId('overview-3d')).not.toBeInTheDocument();
       expect(screen.queryByTestId('overview-fallback')).not.toBeInTheDocument();
       expect(screen.queryByTestId('workplace-canvas')).not.toBeInTheDocument();

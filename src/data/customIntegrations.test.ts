@@ -128,6 +128,19 @@ describe('customIntegrations — Register der SSO-Eigenentwicklungen (P-02)', ()
     expect(CUSTOM_INTEGRATIONS.some((i) => i.services.includes(SERVICE_WILDCARD))).toBe(true);
   });
 
+  it('RT Support-Triage: Register-Eintrag rt-support-triage (Dienst rt, Workflow + Doku)', () => {
+    const entry = CUSTOM_INTEGRATIONS.find((i) => i.id === 'rt-support-triage');
+    expect(entry, 'Register-Eintrag rt-support-triage fehlt').toBeDefined();
+    expect(entry?.services).toEqual(['rt']);
+    expect(entry?.verification).toContain('tests/test_rt_support_triage.py');
+    expect(entry?.repoFile).toContain('k8s/n8n/workflows/rt-support-triage.json');
+    expect(entry?.repoFile).toContain('docs/support-triage.md');
+    // Dry-Run-Default ist Teil des Betriebsvertrags (kein Schreiben ohne Env).
+    expect(entry?.operational).toContain('RT_TRIAGE_DRY_RUN');
+    // Klassifizierung laeuft ueber den LiteLLM-Gateway-Alias, nicht direkt Ollama.
+    expect(entry?.purpose).toContain('qwen3-30b');
+  });
+
   it.skipIf(!REPO_AVAILABLE)(
     `Verifikations- und repoFile-Referenzen existieren im Repo`,
     () => {

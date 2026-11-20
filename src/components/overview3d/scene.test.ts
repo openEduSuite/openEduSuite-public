@@ -1,13 +1,19 @@
 // SPDX-FileCopyrightText: 2026 openEduSuite Contributors
 // SPDX-License-Identifier: Apache-2.0
 //
-// scene.test.ts — Geometrie-Vertrag des 3D-Raums (T-PRS-04):
-//  * Abstände: Zonen-Ring, Tool-Ring und Tool-Fächer sind ~15–25 % gewachsen
-//    (ZONE_R 9.2 -> ~11, TOOL_R 5.6 -> ~6.6, TOOL_SPAN 0.62 -> ~0.8).
-//  * Stationen und Tools überlappen sich nicht (mit den echten Katalogdaten).
-//  * Die Standardkamera rahmt den erweiterten Raum vollständig ein — nichts
-//    wird abgeschnitten, auch nicht der In-Szene-Titel an der Rückwand; Fog
-//    beginnt erst hinter dem Titel.
+// scene.test.ts — Geometrie-Vertrag des 3D-Raums (T-PRS-04 + Überarbeitung):
+//  * Abstände: Zonen-Ring (11.5), Tool-Ring (7.0) und Fächer sind großzügig;
+//    die Standardkamera rahmt den erweiterten Raum vollständig ein.
+//  * Nur nutzerorientierte Dienste: filterUserFacingZones entfernt Admin-/IdP-/
+//    GitOps-/interne Instanzen (keycloak, argocd, bbb-internal, infrastructure)
+//    und leere Zonen — die Szene zeigt nur echte Benutzer-Werkzeuge.
+//  * Proportionale Sektoren: volle Zonen (z. B. «Produktivität») bekommen mehr
+//    Winkel-Raum (zoneStartAngles/zoneWeight) — Tools + Labels bleiben getrennt.
+//  * Pillars hinter dem Stationsring: ROOM_INNER liegt außerhalb aller
+//    Stations-Symbole — Kategorie-Icons/Labels können die Trennwände („Pillars")
+//    strukturell nicht mehr schneiden.
+//  * Stationen und Tools überlappen sich nicht (mit den realen, gefilterten
+//    Katalogdaten).
 
 import { describe, expect, it } from 'vitest';
 import { ACESFilmicToneMapping, PerspectiveCamera, Vector3 } from 'three';
@@ -16,36 +22,68 @@ import {
   SCENE_QUALITY,
   TOOL_MATERIAL_PRESETS,
   stationPosition,
-  zoneAngle,
+  stationAngle,
+  zoneWeight,
+  zoneStartAngles,
   toolPosition,
   toolFanSpan,
   toolRingRadius,
   zoneSectorAngle,
-  staffStationPosition,
-  staffToolPosition,
-  staffFanSpan,
   roomBoundaryAngle,
   roomWallTransform,
   roomOuterRadius,
+  hullRadiusAt,
+  staffStationPosition,
+  staffToolPosition,
+  staffFanSpan,
+  filterUserFacingZones,
+  NON_USER_FACING_SERVICE_IDS,
+  NON_USER_FACING_CATEGORIES,
   academiaRowAlpha,
   ACADEMIA_OPACITY,
+  type SceneZone,
 } from './scene';
 import { LABEL_SUPERSAMPLE } from './sprite';
-import { buildZones, buildUserZones, buildStaffZone } from '../../lib/catalog';
+import { buildUserZones, buildStaffZone } from '../../lib/catalog';
 import { getConfig } from '../../config';
 
-/** Alle Stationen/Tools aus dem echten Katalog als (x|z)-Positionen. */
+/** Scene-Zonen wie WorkplaceScene3D: Katalog -> SceneZone -> NUR nutzerorientiert. */
+function sceneZones(): SceneZone[] {
+  const zones = buildUserZones(getConfig());
+  const toScene = (z: { id: string; labelKey: string; icon: string; color: string; services: { id: string }[] }): SceneZone => ({
+    id: z.id,
+    label: z.labelKey,
+    icon: z.icon,
+    color: z.color,
+    tools: z.services.map((s) => ({
+      id: s.id,
+      name: s.id,
+      zoneId: z.id,
+      zoneColor: z.color,
+      launchUrl: '',
+    })),
+  });
+  return filterUserFacingZones(zones.map(toScene));
+}
+
+/** Zone-Layout-Winkel für die übergebenen Zonen (proportionale Sektoren). */
+function anglesFor(zones: SceneZone[]): number[] {
+  return zoneStartAngles(zones.map((z) => zoneWeight(z.tools.length)));
+}
+
+/** Alle Stationen/Tools aus dem (gefilterten) Katalog als (x|z)-Positionen. */
 function catalogPositions() {
-  const zones = buildZones(getConfig());
-  const stations = zones.map((_, i) => stationPosition(i, zones.length));
+  const zones = sceneZones();
+  const angles = anglesFor(zones);
+  const stations = zones.map((_, i) => stationPosition(angles, i));
   const tools: Array<{ id: string; x: number; z: number }> = [];
   zones.forEach((zone, i) => {
-    zone.services.forEach((svc, j) => {
-      const p = toolPosition(i, zones.length, j, zone.services.length);
+    zone.tools.forEach((svc, j) => {
+      const p = toolPosition(angles, i, j, zone.tools.length);
       tools.push({ id: `${zone.id}:${svc.id}`, ...p });
     });
   });
-  return { zones, stations, tools };
+  return { zones, angles, stations, tools };
 }
 
 /** Mindest-Abstand aller Punkte-Paare (2D auf dem Boden). */
@@ -74,28 +112,158 @@ function buildCamera(aspect: number): PerspectiveCamera {
   return cam;
 }
 
+// --- Nur nutzerorientierte Dienste (Überarbeitung) --------------------------
+describe('scene — nur nutzerorientierte Dienste', () => {
+  it('entfernt Admin-/GitOps-/interne Instanzen, behält die Account-Konsole', () => {
+    for (const id of NON_USER_FACING_SERVICE_IDS) expect(id.length).toBeGreaterThan(0);
+    expect(NON_USER_FACING_CATEGORIES.has('infrastructure')).toBe(true);
+
+    const zones = sceneZones();
+    const ids = new Set(zones.flatMap((z) => z.tools).map((t) => t.id));
+    for (const id of NON_USER_FACING_SERVICE_IDS) expect(ids.has(id)).toBe(false);
+    // Kein Tool einer ausgeblendeten Kategorie bleibt übrig.
+    for (const z of zones) expect(NON_USER_FACING_CATEGORIES.has(z.id)).toBe(false);
+  });
+
+  it('behält die Keycloak-Account-Konsole als nutzerorientierten Dienst', () => {
+    const zones = sceneZones();
+    const tools = zones.flatMap((z) => z.tools);
+    const kc = tools.find((t) => t.id === 'keycloak');
+    expect(kc).toBeDefined();
+    // Sie bewohnt die Zone «Identity» (nutzerorientierte Abbildung der Konsole).
+    expect(kc!.zoneId).toBe('identity');
+    // Die gesamte Identity-Zone ist wieder sichtbar (Station + Account-Tool).
+    expect(zones.map((z) => z.id)).toContain('identity');
+  });
+
+  it('wirft Zonen ohne verbleibende Tools weg (z. B. reine Infrastructure-Zone)', () => {
+    const zones = sceneZones();
+    for (const z of zones) expect(z.tools.length).toBeGreaterThan(0);
+    // Mit den Real-Daten: infrastructure (nur argocd) verschwindet; die
+    // nutzerorientierten Zonen bleiben (inkl. identity mit der Account-Konsole).
+    const zoneIds = zones.map((z) => z.id);
+    expect(zoneIds).toContain('identity');
+    expect(zoneIds).not.toContain('infrastructure');
+    expect(zoneIds).toContain('communication');
+    expect(zoneIds).toContain('productivity');
+  });
+
+  it('behält Staff unangetastet (Staff-Kreis ist separat und nutzerorientiert)', () => {
+    // Der Filter arbeitet auf dem User-Kreis; Staff-Services sind echte
+    // Benutzer-Dienste (Mail für Staff/Studierende) und dürfen nicht wegfallen.
+    const staff = buildStaffZone(getConfig());
+    expect(staff).toBeDefined();
+    expect(staff!.services.length).toBeGreaterThan(0);
+  });
+
+  it('verlässt sich nicht auf die config-Reihenfolge (bleibt robust)', () => {
+    const zones = sceneZones();
+    const angles = anglesFor(zones);
+    // Zweimal dieselbe Geometrie -> deterministisch (kein Zufall, keine Ms).
+    expect(anglesFor(zones)).toEqual(angles);
+  });
+});
+
+// --- Proportionale Sektoren (Überarbeitung) ---------------------------------
+describe('scene — proportionale Sektoren (Tool-Zahl je Zone)', () => {
+  it('teilt den Ring proportional zur Tool-Zahl (volle Zonen breiter)', () => {
+    const zones = sceneZones();
+    const angles = anglesFor(zones);
+    const total = 2 * Math.PI;
+    // Sektoren summieren sich zum vollen Kreis.
+    const sum = zones.reduce((acc, _, i) => acc + zoneSectorAngle(angles, i), 0);
+    expect(sum).toBeCloseTo(total, 8);
+    // Eine volle Zone (z. B. Produktivität, 4 Tools) ist breiter als jede
+    // Ein-Tool-Zone.
+    const prod = zones.find((z) => z.id === 'productivity');
+    const single = zones.find((z) => z.tools.length === 1);
+    expect(prod).toBeDefined();
+    expect(single).toBeDefined();
+    const sector = (id: string) =>
+      zoneSectorAngle(angles, zones.findIndex((z) => z.id === id));
+    expect(sector('productivity')).toBeGreaterThan(sector(single!.id));
+    // Gewichte sind deterministisch und monoton in der Tool-Zahl.
+    expect(zoneWeight(4)).toBeGreaterThan(zoneWeight(1));
+    expect(zoneWeight(0)).toBe(1);
+  });
+
+  it('hält gefüllte Zonen luftig: Tool-Zentren und -Labels überlappen nicht', () => {
+    const { zones, angles, tools } = catalogPositions();
+    const minToolDist = minPairDistance(tools);
+    // Jedes Tool-Zentrum hält den dokumentierten Mindestabstand TOOL_GAP.
+    expect(minToolDist).toBeGreaterThanOrEqual(SCENE_METRICS.layout.toolGap - 1e-6);
+    // Der reale mäßige Fall «Produktivität» (4 Tools) hält die Fächer luftig:
+    // Zentren-Abstand deutlich größer als die Label-Breite (~1.3-1.6 Welt-Einheiten).
+    const prod = zones.find((z) => z.id === 'productivity')!;
+    const pi = zones.indexOf(prod);
+    const prodTools = prod.tools.map((_, j) => toolPosition(angles, pi, j, prod.tools.length));
+    expect(minPairDistance(prodTools)).toBeGreaterThanOrEqual(2.0);
+  });
+});
+
+// --- Themen-Räume & Pillars hinter dem Stationsring (Überarbeitung) ---------
+describe('scene — Pillars hinter dem Stationsring (kein Symbol-Glitch)', () => {
+  it('beginnt das Wandband JENSEITS aller Stations-Symbole', () => {
+    const { rooms, layout } = SCENE_METRICS;
+    // Stations-Sockel-Außenkante = ZONE_R + Bodenring-Außenradius; das Band
+    // startet deutlich dahinter — Kategorie-Symbole können die Pillars nicht
+    // mehr schneiden (strukturelle Trennung, nicht nur Wandhöhe).
+    expect(rooms.innerRadius).toBeGreaterThanOrEqual(layout.zoneRadius + layout.stationRingRadius + 0.5);
+    // Wandband bleibt innerhalb der Raumhülle (kein Überstand in die Tiefe).
+    const { zones, angles } = catalogPositions();
+    for (let i = 0; i < zones.length; i++) {
+      const w = roomWallTransform(angles, i);
+      expect(w.outerRadius).toBeLessThanOrEqual(hullRadiusAt(w.angle) + 1e-6);
+      expect(w.innerRadius).toBeCloseTo(rooms.innerRadius, 5);
+      expect(w.outerRadius).toBeGreaterThanOrEqual(w.innerRadius + 0.5);
+    }
+  });
+
+  it('hält jede Station weit genug von beiden Pillars ihres Raums entfernt', () => {
+    const { zones, angles } = catalogPositions();
+    const { layout } = SCENE_METRICS;
+    for (let i = 0; i < zones.length; i++) {
+      const st = stationPosition(angles, i);
+      const wPrev = roomWallTransform(angles, (i - 1 + zones.length) % zones.length);
+      const wCur = roomWallTransform(angles, i);
+      // Nähester Punkt beider Pillars (Innen-Endpunkte) zur Station.
+      for (const w of [wPrev, wCur]) {
+        const d = Math.hypot(st.x - w.inner.x, st.z - w.inner.z);
+        expect(d).toBeGreaterThanOrEqual(layout.stationRingRadius + 2);
+      }
+    }
+  });
+
+  it('Wandhöhe bleibt niedrig und unter der Stations-Icon-Unterkante', () => {
+    const { rooms } = SCENE_METRICS;
+    expect(rooms.wallHeight).toBeGreaterThanOrEqual(0.8);
+    expect(rooms.wallHeight).toBeLessThanOrEqual(1.3);
+    expect(rooms.wallHeight).toBeLessThan(2.15 - (84 * 0.02) / 2); // Icon-Unterkante
+    expect(rooms.wallThickness).toBeLessThanOrEqual(0.3);
+  });
+});
+
+// --- Abstände (T-PRS-04, aktualisiert) ---------------------------------------
 describe('scene — Abstände (T-PRS-04)', () => {
-  it('vergrößert Zonen-/Tool-Ring und Tool-Fächer um ~15–25 %', () => {
+  it('hält Zonen-/Tool-Ring und Tool-Fächer großzügig', () => {
     const { layout } = SCENE_METRICS;
     expect(layout.zoneRadius).toBeGreaterThanOrEqual(9.2 * 1.15);
-    expect(layout.zoneRadius).toBeLessThanOrEqual(9.2 * 1.25);
+    expect(layout.zoneRadius).toBeLessThanOrEqual(9.2 * 1.35);
     expect(layout.toolRadius).toBeGreaterThanOrEqual(5.6 * 1.15);
-    expect(layout.toolRadius).toBeLessThanOrEqual(5.6 * 1.25);
+    expect(layout.toolRadius).toBeLessThanOrEqual(5.6 * 1.3);
     expect(layout.toolSpan).toBeGreaterThanOrEqual(0.8);
-    expect(layout.toolSpan).toBeLessThanOrEqual(0.62 * 1.5);
     // Tool-Ring bleibt deutlich innerhalb des Zonen-Rings (kein Übergreifen).
     expect(layout.zoneRadius - layout.toolRadius).toBeGreaterThanOrEqual(4);
   });
 
-  it('hält Stationen und Tools mit den echten Katalogdaten auseinander', () => {
+  it('hält Stationen und Tools mit den realen (gefilterten) Katalogdaten auseinander', () => {
     const { zones, stations, tools } = catalogPositions();
     const { room, layout } = SCENE_METRICS;
     expect(stations.length).toBeGreaterThan(1);
     expect(tools.length).toBeGreaterThan(4);
     // Stationen: Bodenring-Außenradius -> Zentren brauchen > 3.5 Abstand.
     expect(minPairDistance(stations)).toBeGreaterThanOrEqual(3.5);
-    // Tools halten den dokumentierten Mindestabstand TOOL_GAP (Sockelradius
-    // 0.34 + Schweben/Hover-Skalierung brauchen Luft).
+    // Tools halten den dokumentierten Mindestabstand TOOL_GAP.
     expect(minPairDistance(tools)).toBeGreaterThanOrEqual(layout.toolGap - 1e-6);
     // Kein Tool ragt in eine Zonen-Station (Bodenring + Objekt-Freiraum).
     const stationClearance = layout.stationRingRadius + layout.toolGap / 2;
@@ -108,16 +276,14 @@ describe('scene — Abstände (T-PRS-04)', () => {
     for (const st of stations) {
       expect(Math.abs(st.x)).toBeLessThanOrEqual(room.width / 2 - 2);
       expect(Math.abs(st.z)).toBeLessThanOrEqual(room.depth / 2 - 2);
-      expect(Math.hypot(st.x, st.z)).toBeCloseTo(layout.zoneRadius, 5);
     }
     // Tool-Fächer bleiben im eigenen Sektor und damit außer Reichweite der
     // Nachbar-Fächer; der Radius bleibt zwischen Tool-Ring und Station.
-    expect(toolFanSpan(zones.length)).toBeLessThanOrEqual(zoneSectorAngle(zones.length) / 2);
-    const outerToolR = layout.zoneRadius - layout.stationRingRadius - layout.toolGap / 2;
-    for (const zone of zones) {
-      expect(toolRingRadius(zone.services.length, zones.length)).toBeGreaterThanOrEqual(layout.toolRadius);
-      expect(toolRingRadius(zone.services.length, zones.length)).toBeLessThanOrEqual(outerToolR);
+    for (let i = 0; i < zones.length; i++) {
+      expect(toolFanSpan(anglesFor(zones), i)).toBeLessThanOrEqual(zoneSectorAngle(anglesFor(zones), i) / 2);
+      expect(toolRingRadius(zones[i].tools.length, anglesFor(zones), i)).toBeGreaterThanOrEqual(layout.toolRadius);
     }
+    const outerToolR = layout.zoneRadius - layout.stationRingRadius - layout.toolGap / 2;
     for (const tool of tools) {
       expect(Math.hypot(tool.x, tool.z)).toBeLessThanOrEqual(outerToolR + 1e-6);
       expect(Math.hypot(tool.x, tool.z)).toBeGreaterThanOrEqual(layout.toolRadius - 1e-6);
@@ -203,15 +369,16 @@ describe('scene — Grafik-/Performance-Qualität (T-PRS-08)', () => {
     }
   });
 
-  it('bewahrt die T-PRS-04-Raumverträge (kein Zurückbauen)', () => {
-    // Die Abstands-/Kamera-Metriken bleiben unverändert Basis der Szene.
-    expect(SCENE_METRICS.layout.zoneRadius).toBe(11);
+  it('bewahrt die Raumverträge (Basis der Szene)', () => {
+    expect(SCENE_METRICS.layout.zoneRadius).toBe(11.5);
+    expect(SCENE_METRICS.layout.toolRadius).toBe(7.0);
+    expect(SCENE_METRICS.layout.toolSpan).toBe(0.8);
     expect(SCENE_METRICS.camera.fov).toBe(55);
     expect(SCENE_METRICS.title.y).toBeCloseTo(SCENE_METRICS.room.height - 2.1, 9);
   });
 });
 
-// --- Neuer Auftrag: zwei Kreise (User vs. Staff) + Themen-Räume -------------
+// --- Staff-Kreis (Admin/Staff-Apps im inneren Ring) --------------------------
 describe('scene — Staff-Kreis (Admin/Staff-Apps im inneren Ring)', () => {
   it('Staff-Ring-Metrik ist konsistent: innen, kleiner, hinter dem Desk', () => {
     const { staff, layout } = SCENE_METRICS;
@@ -237,14 +404,14 @@ describe('scene — Staff-Kreis (Admin/Staff-Apps im inneren Ring)', () => {
   });
 
   it('Staff-Tools kollidieren weder mit dem Desk noch mit User-Objekten', () => {
-    const zones = buildUserZones(getConfig());
+    const { zones, angles } = catalogPositions();
     const staffCount = buildStaffZone(getConfig())?.services.length ?? 0;
     const { layout } = SCENE_METRICS;
-    const userStations = zones.map((_, i) => stationPosition(i, zones.length));
+    const userStations = zones.map((_, i) => stationPosition(angles, i));
     const userTools: Array<{ x: number; z: number }> = [];
     zones.forEach((zone, i) => {
-      zone.services.forEach((_, j) => {
-        userTools.push(toolPosition(i, zones.length, j, zone.services.length));
+      zone.tools.forEach((_, j) => {
+        userTools.push(toolPosition(angles, i, j, zone.tools.length));
       });
     });
     const staffTools = Array.from({ length: staffCount }, (_, i) => staffToolPosition(i, staffCount));
@@ -274,13 +441,13 @@ describe('scene — Staff-Kreis (Admin/Staff-Apps im inneren Ring)', () => {
 
 describe('scene — Themen-Räume (Sektor-Buchten mit Trennwänden)', () => {
   it('jede Raumbegrenzung liegt genau zwischen zwei Nachbar-Stationen', () => {
-    const zones = buildUserZones(getConfig());
+    const { zones, angles } = catalogPositions();
     const n = zones.length;
     for (let i = 0; i < n; i++) {
-      const boundary = roomBoundaryAngle(i, n);
-      const aCur = zoneAngle(i, n);
-      const aNext = zoneAngle((i + 1) % n, n);
-      // Winkel in (-π, π] normalisieren und zwischen Kurve und Nachbar prüfen.
+      const boundary = roomBoundaryAngle(angles, i);
+      const stCur = stationAngle(angles, i);
+      const stNext = stationAngle(angles, (i + 1) % n);
+      // Winkel in (-π, π] normalisieren.
       const norm = (a: number) => {
         let x = a;
         while (x > Math.PI) x -= 2 * Math.PI;
@@ -288,8 +455,8 @@ describe('scene — Themen-Räume (Sektor-Buchten mit Trennwänden)', () => {
         return x;
       };
       const b = norm(boundary);
-      const c = norm(aCur);
-      const nn = norm(aNext);
+      const c = norm(stCur);
+      const nn = norm(stNext);
       // Vom Zentrum der Zone im Uhrzeigersinn (zu größerem Winkel) zum Nachbarn.
       let dCur = b - c;
       if (dCur < 0) dCur += 2 * Math.PI;
@@ -297,47 +464,43 @@ describe('scene — Themen-Räume (Sektor-Buchten mit Trennwänden)', () => {
       if (dNext < 0) dNext += 2 * Math.PI;
       expect(dCur).toBeGreaterThan(1e-6);
       expect(dNext).toBeGreaterThan(1e-6);
-      expect(dCur + dNext).toBeCloseTo(zoneSectorAngle(n), 8);
+      // Die Grenze nimmt ihren Platz proportional ein: sie teilt die Sektoren
+      // i und i+1 an ihren Grenzen (jeweils die halbe Sektorbreite vom Zentrum
+      // der Nachbar-Stationen aus).
+      const sCur = zoneSectorAngle(angles, i);
+      const sNext = zoneSectorAngle(angles, (i + 1) % n);
+      expect(dCur).toBeCloseTo(sCur / 2, 6);
+      expect(dNext).toBeCloseTo(sNext / 2, 6);
     }
   });
 
   it('Wände beginnen außerhalb aller Tools und reichen bis zur Raumhülle', () => {
-    const zones = buildUserZones(getConfig());
-    const n = zones.length;
+    const { zones, angles } = catalogPositions();
     const { rooms, room } = SCENE_METRICS;
     // Maximaler Tool-Radius (alle Fächer) — Wände starten dahinter.
     let maxToolR = 0;
-    zones.forEach((zone) => {
-      const r = toolRingRadius(zone.services.length, n);
+    zones.forEach((zone, i) => {
+      const r = toolRingRadius(zone.tools.length, angles, i);
       if (r > maxToolR) maxToolR = r;
     });
     expect(rooms.innerRadius).toBeGreaterThanOrEqual(maxToolR + 0.5);
-    // Wände liegen im Raum (zwischen Innenradius und Außenhülle).
-    for (let i = 0; i < n; i++) {
-      const w = roomWallTransform(i, n);
+    // Wände liegen im Raum (zwischen Innenradius und Außenhülle) und ragen
+    // nie über die Hülle hinaus.
+    for (let i = 0; i < zones.length; i++) {
+      const w = roomWallTransform(angles, i);
       expect(w.innerRadius).toBeCloseTo(rooms.innerRadius, 5);
-      expect(w.outerRadius).toBeGreaterThanOrEqual(w.innerRadius + 3);
-      // Endpunkt liegt innerhalb der Hülle (leicht vor der Wand).
-      expect(Math.hypot(w.outer.x, w.outer.z)).toBeLessThanOrEqual(Math.hypot(room.width, room.depth) / 2 + 0.5);
+      expect(w.outerRadius).toBeLessThanOrEqual(Math.hypot(room.width, room.depth) / 2 + 0.5);
+      expect(w.outerRadius).toBeLessThanOrEqual(hullRadiusAt(w.angle) + 1e-6);
     }
-    // Wandmetriken: Höhe niedrig (Sicht bleibt offen) UND klar unterhalb der
-    // Stations-Icon-Unterkante (Zentrum 2.15, Halbhöhe 0.84 => 1.31) — nur so
-    // können die schwebenden Icons/Labels nie in die Trennwände ragen.
-    // (Regression: 3.2-hohe Wände verschluckten die untere Icon-Hälfte.)
-    expect(rooms.wallHeight).toBeGreaterThanOrEqual(0.8);
-    expect(rooms.wallHeight).toBeLessThanOrEqual(1.3);
-    expect(rooms.wallHeight).toBeLessThan(2.15 - (84 * 0.02) / 2);
-    expect(rooms.wallThickness).toBeLessThanOrEqual(0.3);
   });
 
   it('jede Station liegt im Inneren ihres eigenen Raums (zwischen zwei Wänden)', () => {
-    const zones = buildUserZones(getConfig());
-    const n = zones.length;
-    for (let i = 0; i < n; i++) {
-      const st = stationPosition(i, n);
+    const { zones, angles } = catalogPositions();
+    for (let i = 0; i < zones.length; i++) {
+      const st = stationPosition(angles, i);
       const a = Math.atan2(st.z, st.x);
-      const bCur = roomBoundaryAngle(i, n);
-      const bPrev = roomBoundaryAngle(i - 1 + n, n);
+      const bCur = roomBoundaryAngle(angles, i);
+      const bPrev = roomBoundaryAngle(angles, (i - 1 + zones.length) % zones.length);
       const norm = (x: number) => {
         while (x > Math.PI) x -= 2 * Math.PI;
         while (x <= -Math.PI) x += 2 * Math.PI;
@@ -354,7 +517,7 @@ describe('scene — Themen-Räume (Sektor-Buchten mit Trennwänden)', () => {
       expect(dLo).toBeGreaterThan(1e-6);
       expect(dHi).toBeGreaterThan(1e-6);
       // Der Raum reicht bis zur Rückwand: Außenradius > Stationsradius.
-      expect(roomOuterRadius(i, n)).toBeGreaterThan(SCENE_METRICS.layout.zoneRadius);
+      expect(roomOuterRadius(angles, i)).toBeGreaterThan(SCENE_METRICS.layout.zoneRadius);
     }
   });
 
@@ -362,8 +525,9 @@ describe('scene — Themen-Räume (Sektor-Buchten mit Trennwänden)', () => {
     const { staff, rooms } = SCENE_METRICS;
     expect(rooms.innerRadius).toBeGreaterThan(staff.radius + 0.5);
     // Der zentrale Innenhof (Desk + Staff-Kreis) ist frei von Trennwänden.
-    for (let i = 0; i < 6; i++) {
-      const w = roomWallTransform(i, 6);
+    const { zones, angles } = catalogPositions();
+    for (let i = 0; i < zones.length; i++) {
+      const w = roomWallTransform(angles, i);
       expect(w.innerRadius).toBeGreaterThanOrEqual(staff.radius + 0.4);
     }
   });
@@ -383,9 +547,9 @@ describe('scene — Themen-Räume (Sektor-Buchten mit Trennwänden)', () => {
     }
   });
 
-  it('bewahrt die T-PRS-04-Raumverträge (Zonen-Ring unverändert)', () => {
-    expect(SCENE_METRICS.layout.zoneRadius).toBe(11);
-    expect(SCENE_METRICS.layout.toolRadius).toBe(6.6);
+  it('bewahrt die Raumverträge (Zonen-Ring unverändert)', () => {
+    expect(SCENE_METRICS.layout.zoneRadius).toBe(11.5);
+    expect(SCENE_METRICS.layout.toolRadius).toBe(7.0);
   });
 
   // Akademie-Symbolik im Hintergrund (Website-Teaser-SVG als dezente Textur).

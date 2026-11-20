@@ -5,6 +5,7 @@ import { getConfig, type PortalService } from '../config';
 import ServiceCard from '../components/ServiceCard';
 import WeatherWidget from '../components/WeatherWidget';
 import NewsFeeds from '../components/NewsFeeds';
+import ArtGallery from '../components/ArtGallery';
 import OverviewScene from '../components/overview3d/OverviewScene';
 import { useFilterState } from '../lib/useFilterState';
 import type { PortalView } from '../lib/filter';
@@ -249,22 +250,19 @@ function Home() {
         </div>
       </header>
 
-      {/* Interaktiver 3D-«Arbeitsplatz» (Präsentationsschicht): NUR für
-          anonyme Besucher als Teaser-Einstieg (T-PRS-04) — klickbar (Dienst
-          öffnen / Zonen-Filter) und vergrößerbar (Vollbild). Ohne WebGL
-          automatisches SVG-Fallback. Eingeloggte Nutzer sehen stattdessen das
-          Dienste-Dashboard; während authed === null (Auth-Probe läuft) wird
-          gar nichts gerendert, damit die Szene nicht aufblitzt (kein Flackern). */}
-      {authed === false && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
-          <OverviewScene onZoneSelect={handleZoneSelect} className="w-full" />
-        </div>
-      )}
+      {/* Öffentliche Landing: Kunstgalerie (leichtgewichtige SVG-Poster im Stil
+          großer Künstler:innen) statt der interaktiven three.js-Szene — die Szene
+          ist von der öffentlichen Seite entfernt und bleibt eingeloggt als
+          Arbeitsplatz-Ansicht (?view=workplace) erhalten. Ohne WebGL-Anforderung;
+          während authed === null (Auth-Probe läuft) wird gar nichts gerendert,
+          damit die Galerie nicht aufblitzt (kein Flackern). */}
+      {authed === false && <ArtGallery />}
 
       {/* Ansichts-Umschalter Kacheln ↔ 3D (Filter-Contract `view`): nur für
-          eingeloggte Nutzer:innen — anonym bleibt es beim 3D-Teaser. Default
-          sind die Dienstkacheln (?view=services), die 3D-Ansicht ist per
-          ?view=workplace teilbar und refresh-stabil (T-PRS-06). */}
+          eingeloggte Nutzer:innen. Default sind die Dienstkacheln
+          (?view=services), die 3D-Ansicht ist per ?view=workplace teilbar und
+          refresh-stabil (T-PRS-06). Kein 3D-Teaser auf der öffentlichen
+          Landing-Seite (dort die Kunstgalerie). */}
       {authed === true && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
           <div
@@ -304,9 +302,9 @@ function Home() {
       )}
 
       {/* 3D-Arbeitsplatz-Ansicht für eingeloggte Nutzer:innen
-          (?view=workplace): dieselbe interaktive Szene wie im anonymen Teaser,
-          jetzt als vollwertige Arbeitsplatz-Ansicht — Zonen-Klick springt
-          zurück zu den Kacheln (handleZoneSelect setzt view=services). */}
+          (?view=workplace): die interaktive Szene als vollwertige
+          Arbeitsplatz-Ansicht — Zonen-Klick springt zurück zu den Kacheln
+          (handleZoneSelect setzt view=services). */}
       {authed === true && view === 'workplace' && (
         <section
           data-testid="workplace-3d"
